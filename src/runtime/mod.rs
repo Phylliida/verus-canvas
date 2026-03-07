@@ -33,3 +33,6 @@ pub fn copy_rational(r: &RuntimeRational) -> (out: RuntimeRational)
 } // verus!
 
 pub mod color;
+pub mod flatten;
+pub mod bezier;
+pub mod tile;

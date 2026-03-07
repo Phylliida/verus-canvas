@@ -16,4 +16,10 @@ pub mod bezier;
 #[cfg(verus_keep_ghost)]
 pub mod flatten_proofs;
 
+#[cfg(verus_keep_ghost)]
+pub mod tile;
+
+#[cfg(verus_keep_ghost)]
+pub mod tile_proofs;
+
 pub mod runtime;
