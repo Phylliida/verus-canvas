@@ -36,3 +36,6 @@ pub mod color;
 pub mod flatten;
 pub mod bezier;
 pub mod tile;
+pub mod canvas;
+pub mod raster;
+pub mod api;

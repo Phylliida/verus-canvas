@@ -22,4 +22,7 @@ pub mod tile;
 #[cfg(verus_keep_ghost)]
 pub mod tile_proofs;
 
+#[cfg(verus_keep_ghost)]
+pub mod raster;
+
 pub mod runtime;
