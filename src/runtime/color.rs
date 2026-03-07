@@ -6,7 +6,7 @@ use vstd::prelude::*;
 #[cfg(verus_keep_ghost)]
 use super::RationalModel;
 #[cfg(verus_keep_ghost)]
-use crate::color::{RgbaSpec, transparent, blend_channel};
+use crate::color::{RgbaSpec, transparent};
 #[cfg(verus_keep_ghost)]
 use crate::blend::blend_over;
 
