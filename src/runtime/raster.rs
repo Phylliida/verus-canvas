@@ -1,5 +1,3 @@
-use verus_rational::RuntimeRational;
-
 #[cfg(verus_keep_ghost)]
 use vstd::prelude::*;
 
@@ -7,8 +5,8 @@ use vstd::prelude::*;
 use crate::scene::FillRule;
 
 use verus_geometry::runtime::point2::RuntimePoint2;
+use super::{RuntimeScalar, copy_scalar};
 use super::color::RuntimeRgba;
-use super::copy_rational;
 use super::tile::RuntimeTileGrid;
 
 #[cfg(verus_keep_ghost)]
@@ -32,8 +30,8 @@ pub fn copy_point2(p: &RuntimePoint2) -> (out: RuntimePoint2)
     requires p.wf_spec(),
     ensures out.wf_spec(), out@ == p@,
 {
-    let x = copy_rational(&p.x);
-    let y = copy_rational(&p.y);
+    let x = copy_scalar(&p.x);
+    let y = copy_scalar(&p.y);
     RuntimePoint2::new(x, y)
 }
 
@@ -41,10 +39,10 @@ pub fn copy_rgba(c: &RuntimeRgba) -> (out: RuntimeRgba)
     requires c.wf_spec(),
     ensures out.wf_spec(), out@ == c@,
 {
-    let r = copy_rational(&c.r);
-    let g = copy_rational(&c.g);
-    let b = copy_rational(&c.b);
-    let a = copy_rational(&c.a);
+    let r = copy_scalar(&c.r);
+    let g = copy_scalar(&c.g);
+    let b = copy_scalar(&c.b);
+    let a = copy_scalar(&c.a);
     RuntimeRgba::new(r, g, b, a)
 }
 
@@ -84,7 +82,7 @@ pub fn edge_winding_exec(
     let term2 = dy.mul(&cx_val);
     let cross = term1.sub(&term2);
 
-    let zero = RuntimeRational::from_int(0);
+    let zero = RuntimeScalar::from_int(0);
     if upward {
         if zero.lt(&cross) { 1i32 } else { 0i32 }
     } else {
@@ -110,25 +108,25 @@ pub fn apply_fill_rule_exec(winding: i32, nonzero: bool) -> (out: bool) {
 pub fn pixel_center(px: usize, py: usize) -> (out: RuntimePoint2)
     ensures out.wf_spec(),
 {
-    let half_x = RuntimeRational::from_frac(1, 2);
-    let half_y = RuntimeRational::from_frac(1, 2);
-    let cx = RuntimeRational::from_int(px as i64).add(&half_x);
-    let cy = RuntimeRational::from_int(py as i64).add(&half_y);
+    let half_x = RuntimeScalar::from_frac(1, 2);
+    let half_y = RuntimeScalar::from_frac(1, 2);
+    let cx = RuntimeScalar::from_int(px as i64).add(&half_x);
+    let cy = RuntimeScalar::from_int(py as i64).add(&half_y);
     RuntimePoint2::new(cx, cy)
 }
 
 /// Convert rational [0,1] to u8 [0,255] with rounding.
 /// This is the sole approximation point in the pipeline.
 #[verifier::external_body]
-pub fn rational_to_u8(r: &RuntimeRational) -> (out: u8) {
-    let zero = RuntimeRational::from_int(0);
+pub fn scalar_to_u8(r: &RuntimeScalar) -> (out: u8) {
+    let zero = RuntimeScalar::from_int(0);
     if r.le(&zero) { return 0u8; }
-    let one = RuntimeRational::from_int(1);
+    let one = RuntimeScalar::from_int(1);
     if r.ge(&one) { return 255u8; }
 
-    let scale = RuntimeRational::from_int(255);
+    let scale = RuntimeScalar::from_int(255);
     let scaled = r.mul(&scale);
-    let half = RuntimeRational::from_frac(1, 2);
+    let half = RuntimeScalar::from_frac(1, 2);
     let rounded = scaled.add(&half);
 
     // Binary search for floor(rounded) in [0, 256)
@@ -136,7 +134,7 @@ pub fn rational_to_u8(r: &RuntimeRational) -> (out: u8) {
     let mut hi: i64 = 256;
     while lo < hi {
         let mid = lo + (hi - lo) / 2;
-        let mid_plus_one = RuntimeRational::from_int(mid + 1);
+        let mid_plus_one = RuntimeScalar::from_int(mid + 1);
         if rounded.lt(&mid_plus_one) {
             hi = mid;
         } else {
@@ -204,10 +202,10 @@ pub fn render_tile(
                 bi = bi + 1;
             }
 
-            let r_u8 = rational_to_u8(&color.r);
-            let g_u8 = rational_to_u8(&color.g);
-            let b_u8 = rational_to_u8(&color.b);
-            let a_u8 = rational_to_u8(&color.a);
+            let r_u8 = scalar_to_u8(&color.r);
+            let g_u8 = scalar_to_u8(&color.g);
+            let b_u8 = scalar_to_u8(&color.b);
+            let a_u8 = scalar_to_u8(&color.a);
             let idx = (py * canvas_width + px) * 4;
             if idx + 3 < pixels.len() {
                 pixels.set(idx, r_u8);

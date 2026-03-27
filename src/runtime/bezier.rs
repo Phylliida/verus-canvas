@@ -1,10 +1,8 @@
-use verus_rational::RuntimeRational;
-
 #[cfg(verus_keep_ghost)]
 use vstd::prelude::*;
 
 #[cfg(verus_keep_ghost)]
-use super::RationalModel;
+use super::ScalarModel;
 #[cfg(verus_keep_ghost)]
 use crate::bezier::*;
 #[cfg(verus_keep_ghost)]
@@ -13,7 +11,7 @@ use verus_geometry::point2::Point2;
 use verus_algebra::traits::*;
 
 use verus_geometry::runtime::point2::RuntimePoint2;
-use super::copy_rational;
+use super::{RuntimeScalar, copy_scalar};
 
 #[cfg(verus_keep_ghost)]
 verus! {
@@ -24,7 +22,7 @@ verus! {
 
 /// Linear interpolation between two points: (1-t)*a + t*b.
 pub fn lerp_point2_exec(
-    a: &RuntimePoint2, b: &RuntimePoint2, t: &RuntimeRational,
+    a: &RuntimePoint2, b: &RuntimePoint2, t: &RuntimeScalar,
 ) -> (out: RuntimePoint2)
     requires
         a.wf_spec(),
@@ -32,23 +30,23 @@ pub fn lerp_point2_exec(
         t.wf_spec(),
     ensures
         out.wf_spec(),
-        out@ == lerp_point2::<RationalModel>(a@, b@, t@),
+        out@ == lerp_point2::<ScalarModel>(a@, b@, t@),
 {
     // one_minus_t = 1 - t
-    let one = RuntimeRational::from_int(1);
+    let one = RuntimeScalar::from_int(1);
     let one_minus_t = one.sub(t);
 
     // x = (1-t)*a.x + t*b.x
-    let omt_ax = copy_rational(&one_minus_t).mul(&a.x);
-    let t_bx = copy_rational(t).mul(&b.x);
+    let omt_ax = copy_scalar(&one_minus_t).mul(&a.x);
+    let t_bx = copy_scalar(t).mul(&b.x);
     let out_x = omt_ax.add(&t_bx);
 
     // y = (1-t)*a.y + t*b.y
     let omt_ay = one_minus_t.mul(&a.y);
-    let t_by = copy_rational(t).mul(&b.y);
+    let t_by = copy_scalar(t).mul(&b.y);
     let out_y = omt_ay.add(&t_by);
 
-    let ghost model = lerp_point2::<RationalModel>(a@, b@, t@);
+    let ghost model = lerp_point2::<ScalarModel>(a@, b@, t@);
     RuntimePoint2 { x: out_x, y: out_y, model: Ghost(model) }
 }
 
@@ -68,7 +66,7 @@ pub fn quad_split_half_exec(
     ensures
         ({
             let (lcp, mid, rcp) = out;
-            let (slcp, smid, srcp) = quad_split_half::<RationalModel>(p0@, p1@, p2@);
+            let (slcp, smid, srcp) = quad_split_half::<ScalarModel>(p0@, p1@, p2@);
             &&& lcp.wf_spec()
             &&& mid.wf_spec()
             &&& rcp.wf_spec()
@@ -77,13 +75,13 @@ pub fn quad_split_half_exec(
             &&& rcp@ == srcp
         }),
 {
-    let two = RuntimeRational::from_int(2);
+    let two = RuntimeScalar::from_int(2);
     let half_opt = two.recip();
     // 2 != 0, so recip succeeds
     let half = half_opt.unwrap();
 
-    let half2 = copy_rational(&half);
-    let half3 = copy_rational(&half);
+    let half2 = copy_scalar(&half);
+    let half3 = copy_scalar(&half);
 
     let left_cp = lerp_point2_exec(p0, p1, &half);
     let right_cp = lerp_point2_exec(p1, p2, &half2);
@@ -110,8 +108,8 @@ pub fn flatten_quad_exec(
         depth,
 {
     if depth == 0 {
-        let p0c = RuntimePoint2::new(copy_rational(&p0.x), copy_rational(&p0.y));
-        let p2c = RuntimePoint2::new(copy_rational(&p2.x), copy_rational(&p2.y));
+        let p0c = RuntimePoint2::new(copy_scalar(&p0.x), copy_scalar(&p0.y));
+        let p2c = RuntimePoint2::new(copy_scalar(&p2.x), copy_scalar(&p2.y));
         out.push(p0c);
         out.push(p2c);
     } else {
@@ -138,7 +136,7 @@ pub fn cubic_split_half_exec(
     ensures
         ({
             let (l1, l2, mid, r1, r2) = out;
-            let (sl1, sl2, smid, sr1, sr2) = cubic_split_half::<RationalModel>(p0@, p1@, p2@, p3@);
+            let (sl1, sl2, smid, sr1, sr2) = cubic_split_half::<ScalarModel>(p0@, p1@, p2@, p3@);
             &&& l1.wf_spec()
             &&& l2.wf_spec()
             &&& mid.wf_spec()
@@ -151,16 +149,16 @@ pub fn cubic_split_half_exec(
             &&& r2@ == sr2
         }),
 {
-    let two = RuntimeRational::from_int(2);
+    let two = RuntimeScalar::from_int(2);
     let half_opt = two.recip();
     // 2 != 0, so recip succeeds
     let half = half_opt.unwrap();
 
-    let half2 = copy_rational(&half);
-    let half3 = copy_rational(&half);
-    let half4 = copy_rational(&half);
-    let half5 = copy_rational(&half);
-    let half6 = copy_rational(&half);
+    let half2 = copy_scalar(&half);
+    let half3 = copy_scalar(&half);
+    let half4 = copy_scalar(&half);
+    let half5 = copy_scalar(&half);
+    let half6 = copy_scalar(&half);
 
     let q0 = lerp_point2_exec(p0, p1, &half);
     let q1 = lerp_point2_exec(p1, p2, &half2);
@@ -191,8 +189,8 @@ pub fn flatten_cubic_exec(
         depth,
 {
     if depth == 0 {
-        let p0c = RuntimePoint2::new(copy_rational(&p0.x), copy_rational(&p0.y));
-        let p3c = RuntimePoint2::new(copy_rational(&p3.x), copy_rational(&p3.y));
+        let p0c = RuntimePoint2::new(copy_scalar(&p0.x), copy_scalar(&p0.y));
+        let p3c = RuntimePoint2::new(copy_scalar(&p3.x), copy_scalar(&p3.y));
         out.push(p0c);
         out.push(p3c);
     } else {

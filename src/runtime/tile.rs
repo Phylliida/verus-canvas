@@ -1,10 +1,8 @@
-use verus_rational::RuntimeRational;
-
 #[cfg(verus_keep_ghost)]
 use vstd::prelude::*;
 
 #[cfg(verus_keep_ghost)]
-use super::RationalModel;
+use super::ScalarModel;
 #[cfg(verus_keep_ghost)]
 use crate::flatten::*;
 #[cfg(verus_keep_ghost)]
@@ -16,18 +14,18 @@ use verus_algebra::embedding::from_int;
 #[cfg(verus_keep_ghost)]
 use verus_algebra::archimedean::nat_mul;
 
+use super::RuntimeScalar;
 use super::flatten::RuntimeBBox;
-use super::copy_rational;
 
 #[cfg(verus_keep_ghost)]
 verus! {
 
 // ---------------------------------------------------------------------------
-// Bridge lemma: from_int::<Rational>(n) == Rational::from_int_spec(n)
+// Bridge lemma: from_int::<ScalarModel>(n) matches ScalarModel::from_int_spec(n)
 //
-// For Rational, zero() = from_int_spec(0), one() = from_int_spec(1),
-// and add_spec preserves den=0 structure, so the algebra embedding
-// nat_mul(n, one()) produces exactly from_int_spec(n).
+// For the current backend (Rational), zero() = from_int_spec(0),
+// one() = from_int_spec(1), and add_spec preserves den=0 structure,
+// so the algebra embedding nat_mul(n, one()) produces from_int_spec(n).
 // ---------------------------------------------------------------------------
 
 
@@ -110,10 +108,10 @@ pub fn tile_bbox_exec(tx: i64, ty: i64, tile_size: i64) -> (out: RuntimeBBox)
     ensures
         out.wf_spec(),
 {
-    let min_x = RuntimeRational::from_int(tx * tile_size);
-    let min_y = RuntimeRational::from_int(ty * tile_size);
-    let max_x = RuntimeRational::from_int((tx + 1) * tile_size);
-    let max_y = RuntimeRational::from_int((ty + 1) * tile_size);
+    let min_x = RuntimeScalar::from_int(tx * tile_size);
+    let min_y = RuntimeScalar::from_int(ty * tile_size);
+    let max_x = RuntimeScalar::from_int((tx + 1) * tile_size);
+    let max_y = RuntimeScalar::from_int((ty + 1) * tile_size);
 
     let min_pt = verus_geometry::runtime::point2::RuntimePoint2::new(min_x, min_y);
     let max_pt = verus_geometry::runtime::point2::RuntimePoint2::new(max_x, max_y);
@@ -131,7 +129,7 @@ pub fn bbox_overlaps_exec(a: &RuntimeBBox, b: &RuntimeBBox) -> (out: bool)
         a.wf_spec(),
         b.wf_spec(),
     ensures
-        out == bbox_overlaps::<RationalModel>(a@, b@),
+        out == bbox_overlaps::<ScalarModel>(a@, b@),
 {
     // Separated if any of: a.max.x < b.min.x, b.max.x < a.min.x,
     //                       a.max.y < b.min.y, b.max.y < a.min.y

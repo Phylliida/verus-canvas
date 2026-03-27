@@ -72,6 +72,13 @@ impl<T: OrderedRing> Equivalence for RgbaSpec<T> {
         T::axiom_eqv_transitive(a.b, b.b, c.b);
         T::axiom_eqv_transitive(a.a, b.a, c.a);
     }
+
+    proof fn axiom_eq_implies_eqv(a: Self, b: Self) {
+        T::axiom_eq_implies_eqv(a.r, b.r);
+        T::axiom_eq_implies_eqv(a.g, b.g);
+        T::axiom_eq_implies_eqv(a.b, b.b);
+        T::axiom_eq_implies_eqv(a.a, b.a);
+    }
 }
 
 } // verus!
