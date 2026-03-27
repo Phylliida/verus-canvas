@@ -1,10 +1,8 @@
-use verus_rational::RuntimeRational;
-
 #[cfg(verus_keep_ghost)]
 use vstd::prelude::*;
 
 #[cfg(verus_keep_ghost)]
-use super::RationalModel;
+use super::ScalarModel;
 #[cfg(verus_keep_ghost)]
 use crate::flatten::*;
 #[cfg(verus_keep_ghost)]
@@ -21,7 +19,7 @@ use verus_algebra::min_max::{min, max};
 use verus_geometry::runtime::point2::RuntimePoint2;
 use verus_linalg::runtime::vec3::RuntimeVec3;
 use verus_linalg::runtime::mat3::RuntimeMat3x3;
-use super::copy_rational;
+use super::{RuntimeScalar, copy_scalar};
 
 #[cfg(verus_keep_ghost)]
 verus! {
@@ -33,13 +31,13 @@ verus! {
 pub struct RuntimeBBox {
     pub min: RuntimePoint2,
     pub max: RuntimePoint2,
-    pub model: Ghost<BBox<RationalModel>>,
+    pub model: Ghost<BBox<ScalarModel>>,
 }
 
 impl View for RuntimeBBox {
-    type V = BBox<RationalModel>;
+    type V = BBox<ScalarModel>;
 
-    open spec fn view(&self) -> BBox<RationalModel> {
+    open spec fn view(&self) -> BBox<ScalarModel> {
         self.model@
     }
 }
@@ -72,10 +70,10 @@ impl RuntimeBBox {
             p.wf_spec(),
         ensures
             out.wf_spec(),
-            out@.min.x == min::<RationalModel>(self@.min.x, p@.x),
-            out@.min.y == min::<RationalModel>(self@.min.y, p@.y),
-            out@.max.x == max::<RationalModel>(self@.max.x, p@.x),
-            out@.max.y == max::<RationalModel>(self@.max.y, p@.y),
+            out@.min.x == min::<ScalarModel>(self@.min.x, p@.x),
+            out@.min.y == min::<ScalarModel>(self@.min.y, p@.y),
+            out@.max.x == max::<ScalarModel>(self@.max.x, p@.x),
+            out@.max.y == max::<ScalarModel>(self@.max.y, p@.y),
     {
         let min_x = self.min.x.min(&p.x);
         let min_y = self.min.y.min(&p.y);
@@ -85,12 +83,12 @@ impl RuntimeBBox {
         let new_max = RuntimePoint2::new(max_x, max_y);
         let ghost model = BBox {
             min: Point2 {
-                x: min::<RationalModel>(self@.min.x, p@.x),
-                y: min::<RationalModel>(self@.min.y, p@.y),
+                x: min::<ScalarModel>(self@.min.x, p@.x),
+                y: min::<ScalarModel>(self@.min.y, p@.y),
             },
             max: Point2 {
-                x: max::<RationalModel>(self@.max.x, p@.x),
-                y: max::<RationalModel>(self@.max.y, p@.y),
+                x: max::<ScalarModel>(self@.max.x, p@.x),
+                y: max::<ScalarModel>(self@.max.y, p@.y),
             },
         };
         RuntimeBBox { min: new_min, max: new_max, model: Ghost(model) }
@@ -105,9 +103,9 @@ impl RuntimeBBox {
             out@.min == p@,
             out@.max == p@,
     {
-        let px = copy_rational(&p.x);
-        let py = copy_rational(&p.y);
-        let min = RuntimePoint2::new(copy_rational(&p.x), copy_rational(&p.y));
+        let px = copy_scalar(&p.x);
+        let py = copy_scalar(&p.y);
+        let min = RuntimePoint2::new(copy_scalar(&p.x), copy_scalar(&p.y));
         let max = RuntimePoint2::new(px, py);
         let ghost model = BBox { min: p@, max: p@ };
         RuntimeBBox { min, max, model: Ghost(model) }
@@ -127,12 +125,12 @@ pub fn transform_point2_exec(
         p.wf_spec(),
     ensures
         out.wf_spec(),
-        out@ == transform_point2::<RationalModel>(m@, p@),
+        out@ == transform_point2::<ScalarModel>(m@, p@),
 {
     // Embed into homogeneous coords: (p.x, p.y, 1)
-    let one = RuntimeRational::from_int(1);
-    let px = copy_rational(&p.x);
-    let py = copy_rational(&p.y);
+    let one = RuntimeScalar::from_int(1);
+    let px = copy_scalar(&p.x);
+    let py = copy_scalar(&p.y);
     let v = RuntimeVec3::new(px, py, one);
 
     // Apply transform
@@ -142,7 +140,7 @@ pub fn transform_point2_exec(
     let out_x = result.x;
     let out_y = result.y;
 
-    let ghost model = transform_point2::<RationalModel>(m@, p@);
+    let ghost model = transform_point2::<ScalarModel>(m@, p@);
     RuntimePoint2 { x: out_x, y: out_y, model: Ghost(model) }
 }
 

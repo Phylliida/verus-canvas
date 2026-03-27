@@ -1,5 +1,3 @@
-use verus_rational::RuntimeRational;
-
 #[cfg(verus_keep_ghost)]
 use vstd::prelude::*;
 
@@ -7,11 +5,11 @@ use vstd::prelude::*;
 use crate::scene::FillRule;
 
 use verus_geometry::runtime::point2::RuntimePoint2;
+use super::RuntimeScalar;
 use super::color::RuntimeRgba;
 use super::flatten::RuntimeBBox;
 use super::tile::{RuntimeTileGrid, bin_items_exec};
 use super::raster::{RuntimePaintItem, copy_point2, copy_rgba, render_all_tiles};
-use super::copy_rational;
 use super::flatten::bbox_of_points_exec;
 
 #[cfg(verus_keep_ghost)]
@@ -91,10 +89,10 @@ impl CanvasContext {
         let bi = b as i64;
         let ai = a as i64;
         // Premultiplied alpha: pm_channel = channel * alpha / (255 * 255)
-        let pm_r = RuntimeRational::from_frac(ri * ai, 255 * 255);
-        let pm_g = RuntimeRational::from_frac(gi * ai, 255 * 255);
-        let pm_b = RuntimeRational::from_frac(bi * ai, 255 * 255);
-        let pm_a = RuntimeRational::from_frac(ai, 255);
+        let pm_r = RuntimeScalar::from_frac(ri * ai, 255 * 255);
+        let pm_g = RuntimeScalar::from_frac(gi * ai, 255 * 255);
+        let pm_b = RuntimeScalar::from_frac(bi * ai, 255 * 255);
+        let pm_a = RuntimeScalar::from_frac(ai, 255);
         self.fill_color = RuntimeRgba::new(pm_r, pm_g, pm_b, pm_a);
     }
 

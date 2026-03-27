@@ -6,15 +6,29 @@ use vstd::prelude::*;
 #[cfg(verus_keep_ghost)]
 use verus_rational::rational::Rational;
 
-/// The scalar model type for all runtime canvas types.
+// ---------------------------------------------------------------------------
+// Scalar backend configuration
+//
+// To swap the numeric backend (e.g. to modular fixed-point), change these
+// two type aliases and the body of copy_scalar. All runtime modules are
+// written against RuntimeScalar / ScalarModel and will follow.
+//
+// RuntimePoint2 (from verus-geometry) also uses RuntimeRational internally;
+// it will need the same treatment when the backend changes.
+// ---------------------------------------------------------------------------
+
+/// Spec-level scalar type. Must satisfy OrderedField.
 #[cfg(verus_keep_ghost)]
-pub type RationalModel = Rational;
+pub type ScalarModel = Rational;
+
+/// Runtime scalar type. Must provide wf_spec() and view() -> ScalarModel.
+pub type RuntimeScalar = RuntimeRational;
 
 #[cfg(verus_keep_ghost)]
 verus! {
 
-/// Copy a RuntimeRational by copying its internal witnesses.
-pub fn copy_rational(r: &RuntimeRational) -> (out: RuntimeRational)
+/// Copy a RuntimeScalar value.
+pub fn copy_scalar(r: &RuntimeScalar) -> (out: RuntimeScalar)
     requires
         r.wf_spec(),
     ensures
