@@ -2,10 +2,10 @@
 use vstd::prelude::*;
 
 #[cfg(verus_keep_ghost)]
-use crate::scene::FillRule;
+use crate::scene::{FillRule, LineCap};
 
 use verus_geometry::runtime::point2::RuntimePoint2;
-use super::RuntimeScalar;
+use super::{RuntimeScalar, copy_scalar};
 use super::color::RuntimeRgba;
 use super::flatten::RuntimeBBox;
 use super::tile::{RuntimeTileGrid, bin_items_exec};
@@ -23,7 +23,10 @@ pub struct CanvasContext {
     pub width: usize,
     pub height: usize,
     pub tile_size: i64,
+    pub aa_samples: u32,
     pub fill_color: RuntimeRgba,
+    pub line_width: RuntimeScalar,
+    pub line_cap: LineCap,
     pub current_path: Vec<RuntimePoint2>,
     pub items: Vec<RuntimePaintItem>,
     pub item_bboxes: Vec<RuntimeBBox>,

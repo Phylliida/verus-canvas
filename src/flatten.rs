@@ -7,6 +7,7 @@ use verus_linalg::mat3::Mat3x3;
 use verus_linalg::mat3::ops::{mat_vec_mul, mat_mul, identity};
 use crate::color::RgbaSpec;
 use crate::scene::*;
+use verus_algebra::embedding::from_int;
 
 verus! {
 
@@ -98,9 +99,26 @@ pub struct FlatPath<T: OrderedField> {
 pub struct PaintItem<T: OrderedField> {
     pub path: FlatPath<T>,
     pub paint: Paint<T>,
-    pub fill_rule: FillRule,
+    pub mode: RenderMode<T>,
     pub z_order: nat,
     pub bbox: BBox<T>,
+}
+
+// ---------------------------------------------------------------------------
+// BBox expansion (for stroke: path bbox + half-width margin)
+// ---------------------------------------------------------------------------
+
+pub open spec fn expand_bbox<T: OrderedRing>(bb: BBox<T>, margin: T) -> BBox<T> {
+    BBox {
+        min: Point2 {
+            x: bb.min.x.sub(margin),
+            y: bb.min.y.sub(margin),
+        },
+        max: Point2 {
+            x: bb.max.x.add(margin),
+            y: bb.max.y.add(margin),
+        },
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -162,17 +180,18 @@ pub open spec fn linearize_path<T: OrderedField>(
 // flatten_graphic — walk the scene tree, emit PaintItems
 // ---------------------------------------------------------------------------
 
-/// Helper: flatten a single leaf (Fill or Stroke) into one PaintItem.
+/// Helper: flatten a single leaf into one PaintItem with the given render mode.
 pub open spec fn flatten_leaf<T: OrderedField>(
     shape: Shape<T>,
     paint: Paint<T>,
+    mode: RenderMode<T>,
     transform: Mat3x3<T>,
     z_base: nat,
 ) -> (Seq<PaintItem<T>>, nat) {
     let xformed_path = transform_path(transform, shape.path);
     let vertices = linearize_path(xformed_path);
     let flat_path = FlatPath { vertices };
-    let bb = if vertices.len() > 0 {
+    let base_bb = if vertices.len() > 0 {
         bbox_of_points(vertices)
     } else {
         BBox {
@@ -180,10 +199,15 @@ pub open spec fn flatten_leaf<T: OrderedField>(
             max: Point2 { x: T::zero(), y: T::zero() },
         }
     };
+    // Expand bbox by half-width for strokes
+    let bb = match mode {
+        RenderMode::Fill { .. } => base_bb,
+        RenderMode::Stroke { half_width, .. } => expand_bbox(base_bb, half_width),
+    };
     let item = PaintItem {
         path: flat_path,
         paint,
-        fill_rule: shape.fill_rule,
+        mode,
         z_order: z_base,
         bbox: bb,
     };
@@ -209,10 +233,16 @@ pub open spec fn flatten_graphic<T: OrderedField>(
         (Seq::empty(), z_base)
     } else {
         match g {
-            Graphic::Fill { shape, paint } =>
-                flatten_leaf(shape, paint, transform, z_base),
-            Graphic::Stroke { shape, paint, width } =>
-                flatten_leaf(shape, paint, transform, z_base),
+            Graphic::Fill { shape, paint } => {
+                let mode = RenderMode::Fill { fill_rule: shape.fill_rule };
+                flatten_leaf(shape, paint, mode, transform, z_base)
+            },
+            Graphic::Stroke { shape, paint, width, cap } => {
+                let two = T::one().add(T::one());
+                let hw = width.mul(two.recip());
+                let mode = RenderMode::Stroke { half_width: hw, cap };
+                flatten_leaf(shape, paint, mode, transform, z_base)
+            },
             Graphic::Group { transform: child_xform, children } => {
                 let composed = mat_mul(transform, child_xform);
                 flatten_children(children, composed, z_base, (fuel - 1) as nat)
