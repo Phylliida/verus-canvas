@@ -2,7 +2,7 @@
 use vstd::prelude::*;
 
 #[cfg(verus_keep_ghost)]
-use crate::scene::FillRule;
+use crate::scene::{FillRule, LineCap};
 
 use verus_geometry::runtime::point2::RuntimePoint2;
 use super::{RuntimeScalar, copy_scalar};
@@ -20,6 +20,9 @@ pub struct RuntimePaintItem {
     pub path: Vec<RuntimePoint2>,
     pub color: RuntimeRgba,
     pub fill_rule: FillRule,
+    pub is_stroke: bool,
+    pub half_width: RuntimeScalar,
+    pub cap: LineCap,
 }
 
 // ---------------------------------------------------------------------------

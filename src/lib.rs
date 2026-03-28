@@ -23,6 +23,12 @@ pub mod tile;
 pub mod tile_proofs;
 
 #[cfg(verus_keep_ghost)]
+pub mod stroke;
+
+#[cfg(verus_keep_ghost)]
 pub mod raster;
+
+#[cfg(verus_keep_ghost)]
+pub mod antialias;
 
 pub mod runtime;

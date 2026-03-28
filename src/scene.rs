@@ -28,6 +28,26 @@ pub enum FillRule {
 }
 
 // ---------------------------------------------------------------------------
+// Line cap (stroke endpoints)
+// ---------------------------------------------------------------------------
+
+pub enum LineCap {
+    /// Flat end at the exact endpoint — no extension.
+    Butt,
+    /// Semicircle of radius half_width at each endpoint.
+    Round,
+}
+
+// ---------------------------------------------------------------------------
+// Render mode — how a flattened item is rasterized
+// ---------------------------------------------------------------------------
+
+pub enum RenderMode<T: OrderedRing> {
+    Fill { fill_rule: FillRule },
+    Stroke { half_width: T, cap: LineCap },
+}
+
+// ---------------------------------------------------------------------------
 // Paint (what to fill/stroke with)
 // ---------------------------------------------------------------------------
 
@@ -50,7 +70,7 @@ pub struct Shape<T: OrderedField> {
 
 pub enum Graphic<T: OrderedField> {
     Fill { shape: Shape<T>, paint: Paint<T> },
-    Stroke { shape: Shape<T>, paint: Paint<T>, width: T },
+    Stroke { shape: Shape<T>, paint: Paint<T>, width: T, cap: LineCap },
     Group { transform: Mat3x3<T>, children: Seq<Graphic<T>> },
 }
 
