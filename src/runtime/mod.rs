@@ -52,4 +52,6 @@ pub mod bezier;
 pub mod tile;
 pub mod canvas;
 pub mod raster;
-pub mod api;
+pub mod path;
+pub mod brush;
+pub mod scene;

@@ -5,6 +5,12 @@ pub mod color;
 pub mod blend;
 
 #[cfg(verus_keep_ghost)]
+pub mod path;
+
+#[cfg(verus_keep_ghost)]
+pub mod brush;
+
+#[cfg(verus_keep_ghost)]
 pub mod scene;
 
 #[cfg(verus_keep_ghost)]
@@ -30,5 +36,8 @@ pub mod raster;
 
 #[cfg(verus_keep_ghost)]
 pub mod antialias;
+
+#[cfg(verus_keep_ghost)]
+pub mod render;
 
 pub mod runtime;

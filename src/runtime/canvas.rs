@@ -1,84 +1,127 @@
+#[cfg(verus_keep_ghost)]
+use vstd::prelude::*;
+
+#[cfg(verus_keep_ghost)]
+verus! {
+
 // ---------------------------------------------------------------------------
-// RuntimeCanvas — RGBA8 pixel buffer (trusted exec, not verified)
+// RuntimeCanvas — verified RGBA8 pixel buffer
 // ---------------------------------------------------------------------------
 
-/// A simple RGBA8 pixel buffer.
 pub struct RuntimeCanvas {
-    width: usize,
-    height: usize,
-    pixels: Vec<u8>,
+    pub width: usize,
+    pub height: usize,
+    pub pixels: Vec<u8>,
 }
 
 impl RuntimeCanvas {
-    /// Create a new canvas filled with transparent black (all zeros).
-    pub fn new(width: usize, height: usize) -> Self {
-        RuntimeCanvas {
-            width,
-            height,
-            pixels: vec![0u8; width * height * 4],
-        }
+    pub open spec fn wf_spec(&self) -> bool {
+        &&& self.width > 0
+        &&& self.height > 0
+        &&& self.width * self.height * 4 <= usize::MAX
+        &&& self.pixels.len() == self.width * self.height * 4
     }
 
-    pub fn width(&self) -> usize {
+    /// Pixel buffer index for (x, y).
+    pub open spec fn pixel_idx(&self, x: usize, y: usize) -> int {
+        (y * self.width + x) * 4
+    }
+
+    /// Create a new canvas filled with transparent black.
+    pub fn new(width: usize, height: usize) -> (out: Self)
+        requires
+            width > 0,
+            height > 0,
+            width * height * 4 <= usize::MAX,
+        ensures
+            out.wf_spec(),
+            out.width == width,
+            out.height == height,
+    {
+        let total = width * height * 4;
+        let mut pixels: Vec<u8> = Vec::new();
+        let mut i: usize = 0;
+        while i < total
+            invariant
+                0 <= i <= total,
+                pixels.len() == i as int,
+                total == width * height * 4,
+                total <= usize::MAX,
+            decreases total - i,
+        {
+            pixels.push(0u8);
+            i = i + 1;
+        }
+        RuntimeCanvas { width, height, pixels }
+    }
+
+    /// Read pixel at (x, y) as (r, g, b, a).
+    pub fn get_pixel(&self, x: usize, y: usize) -> (out: (u8, u8, u8, u8))
+        requires
+            self.wf_spec(),
+            x < self.width,
+            y < self.height,
+    {
+        let idx = self.pixel_offset(x, y);
+        (self.pixels[idx], self.pixels[idx + 1],
+         self.pixels[idx + 2], self.pixels[idx + 3])
+    }
+
+    /// Write pixel at (x, y).
+    pub fn set_pixel(&mut self, x: usize, y: usize, r: u8, g: u8, b: u8, a: u8)
+        requires
+            old(self).wf_spec(),
+            x < old(self).width,
+            y < old(self).height,
+        ensures
+            self.wf_spec(),
+            self.width == old(self).width,
+            self.height == old(self).height,
+            self.pixels.len() == old(self).pixels.len(),
+    {
+        let idx = self.pixel_offset(x, y);
+        self.pixels.set(idx, r);
+        self.pixels.set(idx + 1, g);
+        self.pixels.set(idx + 2, b);
+        self.pixels.set(idx + 3, a);
+    }
+
+    /// Canvas width accessor.
+    pub fn get_width(&self) -> (out: usize)
+        requires self.wf_spec(),
+        ensures out == self.width,
+    {
         self.width
     }
 
-    pub fn height(&self) -> usize {
+    /// Canvas height accessor.
+    pub fn get_height(&self) -> (out: usize)
+        requires self.wf_spec(),
+        ensures out == self.height,
+    {
         self.height
     }
 
-    pub fn pixels(&self) -> &[u8] {
-        &self.pixels
-    }
-
-    /// Get the RGBA values at (x, y).
-    pub fn get_pixel(&self, x: usize, y: usize) -> [u8; 4] {
-        let idx = (y * self.width + x) * 4;
-        [
-            self.pixels[idx],
-            self.pixels[idx + 1],
-            self.pixels[idx + 2],
-            self.pixels[idx + 3],
-        ]
-    }
-
-    /// Set the RGBA values at (x, y).
-    pub fn set_pixel(&mut self, x: usize, y: usize, rgba: [u8; 4]) {
-        let idx = (y * self.width + x) * 4;
-        self.pixels[idx]     = rgba[0];
-        self.pixels[idx + 1] = rgba[1];
-        self.pixels[idx + 2] = rgba[2];
-        self.pixels[idx + 3] = rgba[3];
-    }
-
-    /// Source-over composite a single pixel (approximate u8 arithmetic).
-    pub fn blend_pixel_over(&mut self, x: usize, y: usize, src: [u8; 4]) {
-        let sa = src[3] as u16;
-        if sa == 0 {
-            return; // fully transparent source, no-op
+    /// Compute and verify the pixel buffer index for (x, y).
+    fn pixel_offset(&self, x: usize, y: usize) -> (out: usize)
+        requires
+            self.wf_spec(),
+            x < self.width,
+            y < self.height,
+        ensures
+            out as int == self.pixel_idx(x, y),
+            out + 3 < self.pixels.len(),
+    {
+        proof {
+            assert(y * self.width + x < self.height * self.width)
+                by (nonlinear_arith)
+                requires y < self.height, x < self.width, self.width > 0;
+            assert((y * self.width + x) * 4 + 3 < self.height * self.width * 4)
+                by (nonlinear_arith)
+                requires y * self.width + x < self.height * self.width;
         }
-        if sa == 255 {
-            self.set_pixel(x, y, src);
-            return; // fully opaque source, overwrite
-        }
-        let dst = self.get_pixel(x, y);
-        let inv_sa = 255 - sa;
-        // Premultiplied alpha source-over: out_c = src_c + dst_c * (1 - src_a)
-        let out_r = (src[0] as u16 + (dst[0] as u16 * inv_sa + 127) / 255) as u8;
-        let out_g = (src[1] as u16 + (dst[1] as u16 * inv_sa + 127) / 255) as u8;
-        let out_b = (src[2] as u16 + (dst[2] as u16 * inv_sa + 127) / 255) as u8;
-        let out_a = (sa           + (dst[3] as u16 * inv_sa + 127) / 255) as u8;
-        self.set_pixel(x, y, [out_r, out_g, out_b, out_a]);
-    }
-
-    /// Fill entire canvas with a single color.
-    pub fn clear(&mut self, color: [u8; 4]) {
-        for i in 0..self.pixels.len() / 4 {
-            let idx = i * 4;
-            self.pixels[idx]     = color[0];
-            self.pixels[idx + 1] = color[1];
-            self.pixels[idx + 2] = color[2];
-            self.pixels[idx + 3] = color[3];
-        }
+        (y * self.width + x) * 4
     }
 }
+
+} // verus!
