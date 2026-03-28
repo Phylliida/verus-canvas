@@ -1,13 +1,14 @@
 use vstd::prelude::*;
 use verus_algebra::traits::*;
 use verus_geometry::point2::Point2;
-use verus_linalg::mat3::Mat3x3;
 use crate::color::RgbaSpec;
+use crate::path::Path;
+use crate::brush::Brush;
 
 verus! {
 
 // ---------------------------------------------------------------------------
-// Path segments
+// Path segments (used for curve input before flattening)
 // ---------------------------------------------------------------------------
 
 pub enum PathSegment<T: OrderedField> {
@@ -48,30 +49,54 @@ pub enum RenderMode<T: OrderedRing> {
 }
 
 // ---------------------------------------------------------------------------
-// Paint (what to fill/stroke with)
+// Draw command — a single self-contained drawing operation
+//
+// Each command carries its own path, brush, and rendering parameters.
+// No hidden mutable state.
 // ---------------------------------------------------------------------------
 
-pub enum Paint<T: OrderedRing> {
-    Solid { color: RgbaSpec<T> },
+pub enum DrawCommand<T: OrderedField> {
+    Fill {
+        path: Path<T>,
+        brush: Brush<T>,
+        fill_rule: FillRule,
+    },
+    Stroke {
+        path: Path<T>,
+        brush: Brush<T>,
+        half_width: T,
+        cap: LineCap,
+    },
 }
 
 // ---------------------------------------------------------------------------
-// Shape (path + fill rule)
+// DrawCommand accessors
 // ---------------------------------------------------------------------------
 
-pub struct Shape<T: OrderedField> {
-    pub path: Seq<PathSegment<T>>,
-    pub fill_rule: FillRule,
+/// Extract the render mode from a draw command.
+pub open spec fn command_mode<T: OrderedField>(cmd: DrawCommand<T>) -> RenderMode<T> {
+    match cmd {
+        DrawCommand::Fill { fill_rule, .. } =>
+            RenderMode::Fill { fill_rule },
+        DrawCommand::Stroke { half_width, cap, .. } =>
+            RenderMode::Stroke { half_width, cap },
+    }
 }
 
-// ---------------------------------------------------------------------------
-// Graphic tree (scene description)
-// ---------------------------------------------------------------------------
+/// Extract the vertex sequence from a draw command.
+pub open spec fn command_vertices<T: OrderedField>(cmd: DrawCommand<T>) -> Seq<Point2<T>> {
+    match cmd {
+        DrawCommand::Fill { path, .. } => path.vertices,
+        DrawCommand::Stroke { path, .. } => path.vertices,
+    }
+}
 
-pub enum Graphic<T: OrderedField> {
-    Fill { shape: Shape<T>, paint: Paint<T> },
-    Stroke { shape: Shape<T>, paint: Paint<T>, width: T, cap: LineCap },
-    Group { transform: Mat3x3<T>, children: Seq<Graphic<T>> },
+/// Extract the brush from a draw command.
+pub open spec fn command_brush<T: OrderedField>(cmd: DrawCommand<T>) -> Brush<T> {
+    match cmd {
+        DrawCommand::Fill { brush, .. } => brush,
+        DrawCommand::Stroke { brush, .. } => brush,
+    }
 }
 
 } // verus!

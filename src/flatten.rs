@@ -5,9 +5,9 @@ use verus_geometry::point2::Point2;
 use verus_linalg::vec3::Vec3;
 use verus_linalg::mat3::Mat3x3;
 use verus_linalg::mat3::ops::{mat_vec_mul, mat_mul, identity};
-use crate::color::RgbaSpec;
+use crate::path::Path;
+use crate::brush::Brush;
 use crate::scene::*;
-use verus_algebra::embedding::from_int;
 
 verus! {
 
@@ -47,7 +47,6 @@ pub open spec fn point_in_bbox<T: OrderedRing>(p: Point2<T>, bb: BBox<T>) -> boo
 
 /// Two bboxes overlap (not separated).
 pub open spec fn bbox_overlaps<T: OrderedRing>(a: BBox<T>, b: BBox<T>) -> bool {
-    // NOT separated on any axis
     !(a.max.x.lt(b.min.x) || b.max.x.lt(a.min.x)
       || a.max.y.lt(b.min.y) || b.max.y.lt(a.min.y))
 }
@@ -60,7 +59,6 @@ pub open spec fn bbox_of_points<T: OrderedRing>(pts: Seq<Point2<T>>) -> BBox<T>
         pts.len(),
 {
     if pts.len() == 0 {
-        // degenerate — caller should ensure len > 0
         BBox {
             min: Point2 { x: T::zero(), y: T::zero() },
             max: Point2 { x: T::zero(), y: T::zero() },
@@ -84,27 +82,6 @@ pub open spec fn bbox_of_points<T: OrderedRing>(pts: Seq<Point2<T>>) -> BBox<T>
 }
 
 // ---------------------------------------------------------------------------
-// FlatPath — flattened to line segments only
-// ---------------------------------------------------------------------------
-
-pub struct FlatPath<T: OrderedField> {
-    /// Sequence of vertices; consecutive pairs form line segments.
-    pub vertices: Seq<Point2<T>>,
-}
-
-// ---------------------------------------------------------------------------
-// PaintItem — a single flat renderable item
-// ---------------------------------------------------------------------------
-
-pub struct PaintItem<T: OrderedField> {
-    pub path: FlatPath<T>,
-    pub paint: Paint<T>,
-    pub mode: RenderMode<T>,
-    pub z_order: nat,
-    pub bbox: BBox<T>,
-}
-
-// ---------------------------------------------------------------------------
 // BBox expansion (for stroke: path bbox + half-width margin)
 // ---------------------------------------------------------------------------
 
@@ -122,7 +99,22 @@ pub open spec fn expand_bbox<T: OrderedRing>(bb: BBox<T>, margin: T) -> BBox<T> 
 }
 
 // ---------------------------------------------------------------------------
-// Path flattening helpers (linearize curves to line segments)
+// PaintItem — a single flat renderable item
+//
+// This is the internal representation produced by Scene::fill / Scene::stroke.
+// It carries the flattened vertex sequence, brush, render mode, and bbox.
+// ---------------------------------------------------------------------------
+
+pub struct PaintItem<T: OrderedField> {
+    pub path: Path<T>,
+    pub brush: Brush<T>,
+    pub mode: RenderMode<T>,
+    pub z_order: nat,
+    pub bbox: BBox<T>,
+}
+
+// ---------------------------------------------------------------------------
+// Path segment helpers (for curve flattening)
 // ---------------------------------------------------------------------------
 
 /// Transform a single path segment's control points.
@@ -173,103 +165,6 @@ pub open spec fn linearize_path<T: OrderedField>(
             PathSegment::CubicTo { cp1, cp2, p } => rest.push(cp1).push(cp2).push(p),
             PathSegment::ClosePath => rest,
         }
-    }
-}
-
-// ---------------------------------------------------------------------------
-// flatten_graphic — walk the scene tree, emit PaintItems
-// ---------------------------------------------------------------------------
-
-/// Helper: flatten a single leaf into one PaintItem with the given render mode.
-pub open spec fn flatten_leaf<T: OrderedField>(
-    shape: Shape<T>,
-    paint: Paint<T>,
-    mode: RenderMode<T>,
-    transform: Mat3x3<T>,
-    z_base: nat,
-) -> (Seq<PaintItem<T>>, nat) {
-    let xformed_path = transform_path(transform, shape.path);
-    let vertices = linearize_path(xformed_path);
-    let flat_path = FlatPath { vertices };
-    let base_bb = if vertices.len() > 0 {
-        bbox_of_points(vertices)
-    } else {
-        BBox {
-            min: Point2 { x: T::zero(), y: T::zero() },
-            max: Point2 { x: T::zero(), y: T::zero() },
-        }
-    };
-    // Expand bbox by half-width for strokes
-    let bb = match mode {
-        RenderMode::Fill { .. } => base_bb,
-        RenderMode::Stroke { half_width, .. } => expand_bbox(base_bb, half_width),
-    };
-    let item = PaintItem {
-        path: flat_path,
-        paint,
-        mode,
-        z_order: z_base,
-        bbox: bb,
-    };
-    (seq![item], z_base + 1)
-}
-
-/// Flatten a graphic tree into a sequence of paint items.
-///
-/// `transform`: the accumulated transform from parent groups.
-/// `z_base`: the starting z-order index.
-/// `fuel`: recursion depth bound (must be >= tree depth).
-///
-/// Returns: (items, next_z).
-pub open spec fn flatten_graphic<T: OrderedField>(
-    g: Graphic<T>,
-    transform: Mat3x3<T>,
-    z_base: nat,
-    fuel: nat,
-) -> (Seq<PaintItem<T>>, nat)
-    decreases fuel, 0nat,
-{
-    if fuel == 0 {
-        (Seq::empty(), z_base)
-    } else {
-        match g {
-            Graphic::Fill { shape, paint } => {
-                let mode = RenderMode::Fill { fill_rule: shape.fill_rule };
-                flatten_leaf(shape, paint, mode, transform, z_base)
-            },
-            Graphic::Stroke { shape, paint, width, cap } => {
-                let two = T::one().add(T::one());
-                let hw = width.mul(two.recip());
-                let mode = RenderMode::Stroke { half_width: hw, cap };
-                flatten_leaf(shape, paint, mode, transform, z_base)
-            },
-            Graphic::Group { transform: child_xform, children } => {
-                let composed = mat_mul(transform, child_xform);
-                flatten_children(children, composed, z_base, (fuel - 1) as nat)
-            },
-        }
-    }
-}
-
-/// Flatten a sequence of graphics (children of a Group).
-pub open spec fn flatten_children<T: OrderedField>(
-    children: Seq<Graphic<T>>,
-    transform: Mat3x3<T>,
-    z_base: nat,
-    fuel: nat,
-) -> (Seq<PaintItem<T>>, nat)
-    decreases fuel, 1nat, children.len(),
-{
-    if children.len() == 0 {
-        (Seq::empty(), z_base)
-    } else {
-        let (rest_items, rest_z) = flatten_children(
-            children.drop_last(), transform, z_base, fuel,
-        );
-        let (last_items, final_z) = flatten_graphic(
-            children.last(), transform, rest_z, fuel,
-        );
-        (rest_items + last_items, final_z)
     }
 }
 

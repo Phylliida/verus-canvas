@@ -208,4 +208,29 @@ pub fn bbox_of_points_exec(pts: &Vec<RuntimePoint2>) -> (out: RuntimeBBox)
     }
 }
 
+// ---------------------------------------------------------------------------
+// expand_bbox_exec — expand bbox by a margin in all directions
+// ---------------------------------------------------------------------------
+
+pub fn expand_bbox_exec(bb: &RuntimeBBox, margin: &RuntimeScalar) -> (out: RuntimeBBox)
+    requires
+        bb.wf_spec(),
+        margin.wf_spec(),
+    ensures
+        out.wf_spec(),
+        out@ == expand_bbox::<ScalarModel>(bb@, margin@),
+{
+    let min_x = bb.min.x.sub(margin);
+    let m2 = copy_scalar(margin);
+    let m3 = copy_scalar(margin);
+    let m4 = copy_scalar(margin);
+    let min_y = bb.min.y.sub(&m2);
+    let max_x = bb.max.x.add(&m3);
+    let max_y = bb.max.y.add(&m4);
+    let new_min = RuntimePoint2::new(min_x, min_y);
+    let new_max = RuntimePoint2::new(max_x, max_y);
+    let ghost model = expand_bbox::<ScalarModel>(bb@, margin@);
+    RuntimeBBox { min: new_min, max: new_max, model: Ghost(model) }
+}
+
 } // verus!
