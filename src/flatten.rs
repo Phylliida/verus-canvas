@@ -11,47 +11,47 @@ use crate::scene::*;
 
 verus! {
 
-// ---------------------------------------------------------------------------
-// Affine transform via homogeneous coordinates
-// ---------------------------------------------------------------------------
+//  ---------------------------------------------------------------------------
+//  Affine transform via homogeneous coordinates
+//  ---------------------------------------------------------------------------
 
-/// Embed a 2D point into homogeneous coordinates (z = 1).
+///  Embed a 2D point into homogeneous coordinates (z = 1).
 pub open spec fn to_homogeneous<T: Ring>(p: Point2<T>) -> Vec3<T> {
     Vec3 { x: p.x, y: p.y, z: T::one() }
 }
 
-/// Extract a 2D point from homogeneous coordinates (drop z).
+///  Extract a 2D point from homogeneous coordinates (drop z).
 pub open spec fn from_homogeneous<T: Ring>(v: Vec3<T>) -> Point2<T> {
     Point2 { x: v.x, y: v.y }
 }
 
-/// Apply a 2D affine transform (represented as Mat3x3) to a point.
+///  Apply a 2D affine transform (represented as Mat3x3) to a point.
 pub open spec fn transform_point2<T: Ring>(m: Mat3x3<T>, p: Point2<T>) -> Point2<T> {
     from_homogeneous(mat_vec_mul(m, to_homogeneous(p)))
 }
 
-// ---------------------------------------------------------------------------
-// BBox — axis-aligned bounding box
-// ---------------------------------------------------------------------------
+//  ---------------------------------------------------------------------------
+//  BBox — axis-aligned bounding box
+//  ---------------------------------------------------------------------------
 
 pub struct BBox<T: OrderedRing> {
     pub min: Point2<T>,
     pub max: Point2<T>,
 }
 
-/// Point p is inside bbox.
+///  Point p is inside bbox.
 pub open spec fn point_in_bbox<T: OrderedRing>(p: Point2<T>, bb: BBox<T>) -> bool {
     bb.min.x.le(p.x) && p.x.le(bb.max.x)
     && bb.min.y.le(p.y) && p.y.le(bb.max.y)
 }
 
-/// Two bboxes overlap (not separated).
+///  Two bboxes overlap (not separated).
 pub open spec fn bbox_overlaps<T: OrderedRing>(a: BBox<T>, b: BBox<T>) -> bool {
     !(a.max.x.lt(b.min.x) || b.max.x.lt(a.min.x)
       || a.max.y.lt(b.min.y) || b.max.y.lt(a.min.y))
 }
 
-/// Compute bbox of a sequence of points using min/max fold.
+///  Compute bbox of a sequence of points using min/max fold.
 pub open spec fn bbox_of_points<T: OrderedRing>(pts: Seq<Point2<T>>) -> BBox<T>
     recommends
         pts.len() > 0,
@@ -81,9 +81,9 @@ pub open spec fn bbox_of_points<T: OrderedRing>(pts: Seq<Point2<T>>) -> BBox<T>
     }
 }
 
-// ---------------------------------------------------------------------------
-// BBox expansion (for stroke: path bbox + half-width margin)
-// ---------------------------------------------------------------------------
+//  ---------------------------------------------------------------------------
+//  BBox expansion (for stroke: path bbox + half-width margin)
+//  ---------------------------------------------------------------------------
 
 pub open spec fn expand_bbox<T: OrderedRing>(bb: BBox<T>, margin: T) -> BBox<T> {
     BBox {
@@ -98,12 +98,12 @@ pub open spec fn expand_bbox<T: OrderedRing>(bb: BBox<T>, margin: T) -> BBox<T> 
     }
 }
 
-// ---------------------------------------------------------------------------
-// PaintItem — a single flat renderable item
+//  ---------------------------------------------------------------------------
+//  PaintItem — a single flat renderable item
 //
-// This is the internal representation produced by Scene::fill / Scene::stroke.
-// It carries the flattened vertex sequence, brush, render mode, and bbox.
-// ---------------------------------------------------------------------------
+//  This is the internal representation produced by Scene::fill / Scene::stroke.
+//  It carries the flattened vertex sequence, brush, render mode, and bbox.
+//  ---------------------------------------------------------------------------
 
 pub struct PaintItem<T: OrderedField> {
     pub path: Path<T>,
@@ -113,11 +113,11 @@ pub struct PaintItem<T: OrderedField> {
     pub bbox: BBox<T>,
 }
 
-// ---------------------------------------------------------------------------
-// Path segment helpers (for curve flattening)
-// ---------------------------------------------------------------------------
+//  ---------------------------------------------------------------------------
+//  Path segment helpers (for curve flattening)
+//  ---------------------------------------------------------------------------
 
-/// Transform a single path segment's control points.
+///  Transform a single path segment's control points.
 pub open spec fn transform_segment<T: OrderedField>(
     m: Mat3x3<T>, seg: PathSegment<T>,
 ) -> PathSegment<T> {
@@ -138,15 +138,15 @@ pub open spec fn transform_segment<T: OrderedField>(
     }
 }
 
-/// Transform all segments in a path.
+///  Transform all segments in a path.
 pub open spec fn transform_path<T: OrderedField>(
     m: Mat3x3<T>, path: Seq<PathSegment<T>>,
 ) -> Seq<PathSegment<T>> {
     Seq::new(path.len(), |i: int| transform_segment(m, path[i]))
 }
 
-/// Linearize a path by extracting only the endpoint vertices.
-/// Curves are kept as their endpoints only (bezier subdivision happens separately).
+///  Linearize a path by extracting only the endpoint vertices.
+///  Curves are kept as their endpoints only (bezier subdivision happens separately).
 pub open spec fn linearize_path<T: OrderedField>(
     path: Seq<PathSegment<T>>,
 ) -> Seq<Point2<T>>
@@ -168,4 +168,4 @@ pub open spec fn linearize_path<T: OrderedField>(
     }
 }
 
-} // verus!
+} //  verus!

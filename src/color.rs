@@ -3,9 +3,9 @@ use verus_algebra::traits::*;
 
 verus! {
 
-// ---------------------------------------------------------------------------
-// RgbaSpec type — premultiplied alpha color
-// ---------------------------------------------------------------------------
+//  ---------------------------------------------------------------------------
+//  RgbaSpec type — premultiplied alpha color
+//  ---------------------------------------------------------------------------
 
 pub struct RgbaSpec<T: OrderedRing> {
     pub r: T,
@@ -14,37 +14,37 @@ pub struct RgbaSpec<T: OrderedRing> {
     pub a: T,
 }
 
-// ---------------------------------------------------------------------------
-// Validity predicates
-// ---------------------------------------------------------------------------
+//  ---------------------------------------------------------------------------
+//  Validity predicates
+//  ---------------------------------------------------------------------------
 
-/// A single channel value is valid: 0 <= v <= 1.
+///  A single channel value is valid: 0 <= v <= 1.
 pub open spec fn channel_valid<T: OrderedRing>(v: T) -> bool {
     T::zero().le(v) && v.le(T::one())
 }
 
-/// All four channels are valid.
+///  All four channels are valid.
 pub open spec fn color_valid<T: OrderedRing>(c: RgbaSpec<T>) -> bool {
     channel_valid(c.r) && channel_valid(c.g) && channel_valid(c.b) && channel_valid(c.a)
 }
 
-// ---------------------------------------------------------------------------
-// Constructors
-// ---------------------------------------------------------------------------
+//  ---------------------------------------------------------------------------
+//  Constructors
+//  ---------------------------------------------------------------------------
 
-/// Fully transparent black.
+///  Fully transparent black.
 pub open spec fn transparent<T: OrderedRing>() -> RgbaSpec<T> {
     RgbaSpec { r: T::zero(), g: T::zero(), b: T::zero(), a: T::zero() }
 }
 
-/// Fully opaque color (alpha = 1).
+///  Fully opaque color (alpha = 1).
 pub open spec fn opaque<T: OrderedRing>(r: T, g: T, b: T) -> RgbaSpec<T> {
     RgbaSpec { r, g, b, a: T::one() }
 }
 
-// ---------------------------------------------------------------------------
-// Equivalence (componentwise)
-// ---------------------------------------------------------------------------
+//  ---------------------------------------------------------------------------
+//  Equivalence (componentwise)
+//  ---------------------------------------------------------------------------
 
 impl<T: OrderedRing> Equivalence for RgbaSpec<T> {
     open spec fn eqv(self, other: Self) -> bool {
@@ -81,4 +81,4 @@ impl<T: OrderedRing> Equivalence for RgbaSpec<T> {
     }
 }
 
-} // verus!
+} //  verus!

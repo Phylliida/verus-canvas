@@ -13,9 +13,9 @@ use super::color::RuntimeRgba;
 #[cfg(verus_keep_ghost)]
 verus! {
 
-// ---------------------------------------------------------------------------
-// RuntimeBrush — verified runtime brush
-// ---------------------------------------------------------------------------
+//  ---------------------------------------------------------------------------
+//  RuntimeBrush — verified runtime brush
+//  ---------------------------------------------------------------------------
 
 pub struct RuntimeBrush {
     pub color: RuntimeRgba,
@@ -36,7 +36,7 @@ impl RuntimeBrush {
         &&& self@ == (Brush::Solid { color: self.color@ })
     }
 
-    /// Create a solid-color brush.
+    ///  Create a solid-color brush.
     pub fn solid(color: RuntimeRgba) -> (out: Self)
         requires
             color.wf_spec(),
@@ -48,4 +48,4 @@ impl RuntimeBrush {
     }
 }
 
-} // verus!
+} //  verus!

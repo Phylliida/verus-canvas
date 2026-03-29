@@ -21,12 +21,12 @@ use super::brush::RuntimeBrush;
 #[cfg(verus_keep_ghost)]
 verus! {
 
-// ---------------------------------------------------------------------------
-// RuntimeScene — verified scene builder (Vello-style)
+//  ---------------------------------------------------------------------------
+//  RuntimeScene — verified scene builder (Vello-style)
 //
-// Each fill()/stroke() call eagerly flattens to a RuntimePaintItem + bbox.
-// A ghost Seq<DrawCommand<ScalarModel>> tracks the spec-level scene.
-// ---------------------------------------------------------------------------
+//  Each fill()/stroke() call eagerly flattens to a RuntimePaintItem + bbox.
+//  A ghost Seq<DrawCommand<ScalarModel>> tracks the spec-level scene.
+//  ---------------------------------------------------------------------------
 
 pub struct RuntimeScene {
     pub items: Vec<RuntimePaintItem>,
@@ -44,7 +44,7 @@ impl RuntimeScene {
             ==> self.items[i].color.wf_spec()
     }
 
-    /// Create an empty scene.
+    ///  Create an empty scene.
     pub fn new() -> (out: Self)
         ensures
             out.wf_spec(),
@@ -57,7 +57,7 @@ impl RuntimeScene {
         }
     }
 
-    /// Add a fill command to the scene.
+    ///  Add a fill command to the scene.
     pub fn fill(
         &mut self,
         path: &RuntimePath,
@@ -74,13 +74,13 @@ impl RuntimeScene {
             self.wf_spec(),
             self.commands@.len() == old(self).commands@.len() + 1,
     {
-        // Compute bbox from path vertices
+        //  Compute bbox from path vertices
         let bbox = bbox_of_points_exec(&path.vertices);
 
-        // Copy color from brush
+        //  Copy color from brush
         let color = copy_rgba(&brush.color);
 
-        // Copy path vertices
+        //  Copy path vertices
         let mut item_path: Vec<RuntimePoint2> = Vec::new();
         let mut i: usize = 0;
         while i < path.vertices.len()
@@ -117,7 +117,7 @@ impl RuntimeScene {
         self.commands = Ghost(self.commands@.push(cmd));
     }
 
-    /// Add a stroke command to the scene.
+    ///  Add a stroke command to the scene.
     pub fn stroke(
         &mut self,
         path: &RuntimePath,
@@ -136,15 +136,15 @@ impl RuntimeScene {
             self.wf_spec(),
             self.commands@.len() == old(self).commands@.len() + 1,
     {
-        // half_width = width / 2
+        //  half_width = width / 2
         let two = RuntimeScalar::from_int(2);
         let half_width = width.mul(&two.recip().unwrap());
 
-        // Compute base bbox, then expand by half_width
+        //  Compute base bbox, then expand by half_width
         let base_bbox = bbox_of_points_exec(&path.vertices);
         let bbox = expand_bbox_exec(&base_bbox, &half_width);
 
-        // Copy color and path
+        //  Copy color and path
         let color = copy_rgba(&brush.color);
         let mut item_path: Vec<RuntimePoint2> = Vec::new();
         let mut i: usize = 0;
@@ -165,7 +165,7 @@ impl RuntimeScene {
         let item = RuntimePaintItem {
             path: item_path,
             color,
-            fill_rule: FillRule::NonZero, // unused for stroke
+            fill_rule: FillRule::NonZero, //  unused for stroke
             is_stroke: true,
             half_width: hw_copy,
             cap,
@@ -184,4 +184,4 @@ impl RuntimeScene {
     }
 }
 
-} // verus!
+} //  verus!

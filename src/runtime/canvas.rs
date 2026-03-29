@@ -4,9 +4,9 @@ use vstd::prelude::*;
 #[cfg(verus_keep_ghost)]
 verus! {
 
-// ---------------------------------------------------------------------------
-// RuntimeCanvas — verified RGBA8 pixel buffer
-// ---------------------------------------------------------------------------
+//  ---------------------------------------------------------------------------
+//  RuntimeCanvas — verified RGBA8 pixel buffer
+//  ---------------------------------------------------------------------------
 
 pub struct RuntimeCanvas {
     pub width: usize,
@@ -22,12 +22,12 @@ impl RuntimeCanvas {
         &&& self.pixels.len() == self.width * self.height * 4
     }
 
-    /// Pixel buffer index for (x, y).
+    ///  Pixel buffer index for (x, y).
     pub open spec fn pixel_idx(&self, x: usize, y: usize) -> int {
         (y * self.width + x) * 4
     }
 
-    /// Create a new canvas filled with transparent black.
+    ///  Create a new canvas filled with transparent black.
     pub fn new(width: usize, height: usize) -> (out: Self)
         requires
             width > 0,
@@ -55,7 +55,7 @@ impl RuntimeCanvas {
         RuntimeCanvas { width, height, pixels }
     }
 
-    /// Read pixel at (x, y) as (r, g, b, a).
+    ///  Read pixel at (x, y) as (r, g, b, a).
     pub fn get_pixel(&self, x: usize, y: usize) -> (out: (u8, u8, u8, u8))
         requires
             self.wf_spec(),
@@ -67,7 +67,7 @@ impl RuntimeCanvas {
          self.pixels[idx + 2], self.pixels[idx + 3])
     }
 
-    /// Write pixel at (x, y).
+    ///  Write pixel at (x, y).
     pub fn set_pixel(&mut self, x: usize, y: usize, r: u8, g: u8, b: u8, a: u8)
         requires
             old(self).wf_spec(),
@@ -86,7 +86,7 @@ impl RuntimeCanvas {
         self.pixels.set(idx + 3, a);
     }
 
-    /// Canvas width accessor.
+    ///  Canvas width accessor.
     pub fn get_width(&self) -> (out: usize)
         requires self.wf_spec(),
         ensures out == self.width,
@@ -94,7 +94,7 @@ impl RuntimeCanvas {
         self.width
     }
 
-    /// Canvas height accessor.
+    ///  Canvas height accessor.
     pub fn get_height(&self) -> (out: usize)
         requires self.wf_spec(),
         ensures out == self.height,
@@ -102,7 +102,7 @@ impl RuntimeCanvas {
         self.height
     }
 
-    /// Compute and verify the pixel buffer index for (x, y).
+    ///  Compute and verify the pixel buffer index for (x, y).
     fn pixel_offset(&self, x: usize, y: usize) -> (out: usize)
         requires
             self.wf_spec(),
@@ -124,4 +124,4 @@ impl RuntimeCanvas {
     }
 }
 
-} // verus!
+} //  verus!

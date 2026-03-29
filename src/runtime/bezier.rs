@@ -16,11 +16,11 @@ use super::{RuntimeScalar, copy_scalar};
 #[cfg(verus_keep_ghost)]
 verus! {
 
-// ---------------------------------------------------------------------------
-// lerp_point2_exec
-// ---------------------------------------------------------------------------
+//  ---------------------------------------------------------------------------
+//  lerp_point2_exec
+//  ---------------------------------------------------------------------------
 
-/// Linear interpolation between two points: (1-t)*a + t*b.
+///  Linear interpolation between two points: (1-t)*a + t*b.
 pub fn lerp_point2_exec(
     a: &RuntimePoint2, b: &RuntimePoint2, t: &RuntimeScalar,
 ) -> (out: RuntimePoint2)
@@ -32,16 +32,16 @@ pub fn lerp_point2_exec(
         out.wf_spec(),
         out@ == lerp_point2::<ScalarModel>(a@, b@, t@),
 {
-    // one_minus_t = 1 - t
+    //  one_minus_t = 1 - t
     let one = RuntimeScalar::from_int(1);
     let one_minus_t = one.sub(t);
 
-    // x = (1-t)*a.x + t*b.x
+    //  x = (1-t)*a.x + t*b.x
     let omt_ax = copy_scalar(&one_minus_t).mul(&a.x);
     let t_bx = copy_scalar(t).mul(&b.x);
     let out_x = omt_ax.add(&t_bx);
 
-    // y = (1-t)*a.y + t*b.y
+    //  y = (1-t)*a.y + t*b.y
     let omt_ay = one_minus_t.mul(&a.y);
     let t_by = copy_scalar(t).mul(&b.y);
     let out_y = omt_ay.add(&t_by);
@@ -50,12 +50,12 @@ pub fn lerp_point2_exec(
     RuntimePoint2 { x: out_x, y: out_y, model: Ghost(model) }
 }
 
-// ---------------------------------------------------------------------------
-// Quadratic bezier subdivision exec
-// ---------------------------------------------------------------------------
+//  ---------------------------------------------------------------------------
+//  Quadratic bezier subdivision exec
+//  ---------------------------------------------------------------------------
 
-/// Split a quadratic bezier at t=1/2.
-/// Returns (left_cp, mid, right_cp).
+///  Split a quadratic bezier at t=1/2.
+///  Returns (left_cp, mid, right_cp).
 pub fn quad_split_half_exec(
     p0: &RuntimePoint2, p1: &RuntimePoint2, p2: &RuntimePoint2,
 ) -> (out: (RuntimePoint2, RuntimePoint2, RuntimePoint2))
@@ -77,7 +77,7 @@ pub fn quad_split_half_exec(
 {
     let two = RuntimeScalar::from_int(2);
     let half_opt = two.recip();
-    // 2 != 0, so recip succeeds
+    //  2 != 0, so recip succeeds
     let half = half_opt.unwrap();
 
     let half2 = copy_scalar(&half);
@@ -90,8 +90,8 @@ pub fn quad_split_half_exec(
     (left_cp, mid, right_cp)
 }
 
-/// Flatten a quadratic bezier by recursive subdivision.
-/// Writes vertices into `out` Vec. Preserves wf_spec of existing elements.
+///  Flatten a quadratic bezier by recursive subdivision.
+///  Writes vertices into `out` Vec. Preserves wf_spec of existing elements.
 pub fn flatten_quad_exec(
     p0: &RuntimePoint2, p1: &RuntimePoint2, p2: &RuntimePoint2,
     depth: u32,
@@ -119,12 +119,12 @@ pub fn flatten_quad_exec(
     }
 }
 
-// ---------------------------------------------------------------------------
-// Cubic bezier subdivision exec
-// ---------------------------------------------------------------------------
+//  ---------------------------------------------------------------------------
+//  Cubic bezier subdivision exec
+//  ---------------------------------------------------------------------------
 
-/// Split a cubic bezier at t=1/2.
-/// Returns (l1, l2, mid, r1, r2).
+///  Split a cubic bezier at t=1/2.
+///  Returns (l1, l2, mid, r1, r2).
 pub fn cubic_split_half_exec(
     p0: &RuntimePoint2, p1: &RuntimePoint2, p2: &RuntimePoint2, p3: &RuntimePoint2,
 ) -> (out: (RuntimePoint2, RuntimePoint2, RuntimePoint2, RuntimePoint2, RuntimePoint2))
@@ -151,7 +151,7 @@ pub fn cubic_split_half_exec(
 {
     let two = RuntimeScalar::from_int(2);
     let half_opt = two.recip();
-    // 2 != 0, so recip succeeds
+    //  2 != 0, so recip succeeds
     let half = half_opt.unwrap();
 
     let half2 = copy_scalar(&half);
@@ -170,8 +170,8 @@ pub fn cubic_split_half_exec(
     (q0, r0, mid, r1, q2)
 }
 
-/// Flatten a cubic bezier by recursive subdivision.
-/// Writes vertices into `out` Vec. Preserves wf_spec of existing elements.
+///  Flatten a cubic bezier by recursive subdivision.
+///  Writes vertices into `out` Vec. Preserves wf_spec of existing elements.
 pub fn flatten_cubic_exec(
     p0: &RuntimePoint2, p1: &RuntimePoint2, p2: &RuntimePoint2, p3: &RuntimePoint2,
     depth: u32,
@@ -200,4 +200,4 @@ pub fn flatten_cubic_exec(
     }
 }
 
-} // verus!
+} //  verus!

@@ -12,9 +12,9 @@ use super::copy_scalar;
 #[cfg(verus_keep_ghost)]
 verus! {
 
-// ---------------------------------------------------------------------------
-// RuntimePath — an immutable, verified path
-// ---------------------------------------------------------------------------
+//  ---------------------------------------------------------------------------
+//  RuntimePath — an immutable, verified path
+//  ---------------------------------------------------------------------------
 
 pub struct RuntimePath {
     pub vertices: Vec<RuntimePoint2>,
@@ -41,9 +41,9 @@ impl RuntimePath {
     }
 }
 
-// ---------------------------------------------------------------------------
-// RuntimePathBuilder — builds paths with verified push operations
-// ---------------------------------------------------------------------------
+//  ---------------------------------------------------------------------------
+//  RuntimePathBuilder — builds paths with verified push operations
+//  ---------------------------------------------------------------------------
 
 pub struct RuntimePathBuilder {
     pub vertices: Vec<RuntimePoint2>,
@@ -63,7 +63,7 @@ impl RuntimePathBuilder {
         RuntimePathBuilder { vertices: Vec::new() }
     }
 
-    /// Push a point onto the path.
+    ///  Push a point onto the path.
     pub fn push(&mut self, p: RuntimePoint2)
         requires
             old(self).vertices_wf(),
@@ -76,7 +76,7 @@ impl RuntimePathBuilder {
         self.vertices.push(p);
     }
 
-    /// Push a point specified as integer coordinates.
+    ///  Push a point specified as integer coordinates.
     pub fn push_ints(&mut self, x: i64, y: i64)
         requires
             old(self).vertices_wf(),
@@ -88,7 +88,7 @@ impl RuntimePathBuilder {
         self.vertices.push(p);
     }
 
-    /// Build an immutable path from the accumulated vertices.
+    ///  Build an immutable path from the accumulated vertices.
     pub fn build(self, closed: bool) -> (out: RuntimePath)
         requires
             self.vertices.len() >= 2,
@@ -111,4 +111,4 @@ impl RuntimePathBuilder {
     }
 }
 
-} // verus!
+} //  verus!

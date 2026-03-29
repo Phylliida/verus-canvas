@@ -6,16 +6,16 @@ use crate::color::*;
 
 verus! {
 
-// ---------------------------------------------------------------------------
-// Porter-Duff "source over" compositing (premultiplied alpha)
-// ---------------------------------------------------------------------------
+//  ---------------------------------------------------------------------------
+//  Porter-Duff "source over" compositing (premultiplied alpha)
+//  ---------------------------------------------------------------------------
 
-/// Blend a single channel: src_c + dst_c * (1 - src_a)
+///  Blend a single channel: src_c + dst_c * (1 - src_a)
 pub open spec fn blend_channel<T: OrderedRing>(src_c: T, dst_c: T, src_a: T) -> T {
     src_c.add(dst_c.mul(T::one().sub(src_a)))
 }
 
-/// Composite src over dst (premultiplied alpha).
+///  Composite src over dst (premultiplied alpha).
 pub open spec fn blend_over<T: OrderedRing>(src: RgbaSpec<T>, dst: RgbaSpec<T>) -> RgbaSpec<T> {
     let one_minus_a = T::one().sub(src.a);
     RgbaSpec {
@@ -26,11 +26,11 @@ pub open spec fn blend_over<T: OrderedRing>(src: RgbaSpec<T>, dst: RgbaSpec<T>) 
     }
 }
 
-// ---------------------------------------------------------------------------
-// Helper: prove 0 + c * oma ≡ c when oma ≡ 1
-// ---------------------------------------------------------------------------
+//  ---------------------------------------------------------------------------
+//  Helper: prove 0 + c * oma ≡ c when oma ≡ 1
+//  ---------------------------------------------------------------------------
 
-/// When oma ≡ 1: 0 + c * oma ≡ c.
+///  When oma ≡ 1: 0 + c * oma ≡ c.
 proof fn lemma_blend_channel_zero_source<T: OrderedRing>(c: T, oma: T)
     requires
         oma.eqv(T::one()),
@@ -39,40 +39,40 @@ proof fn lemma_blend_channel_zero_source<T: OrderedRing>(c: T, oma: T)
 {
     let one = T::one();
     let zero = T::zero();
-    // c * oma ≡ c * one (congruence)
+    //  c * oma ≡ c * one (congruence)
     T::axiom_eqv_reflexive(c);
     ring_lemmas::lemma_mul_congruence::<T>(c, c, oma, one);
-    // c * one ≡ c
+    //  c * one ≡ c
     T::axiom_mul_one_right(c);
-    // c * oma ≡ c
+    //  c * oma ≡ c
     T::axiom_eqv_transitive(c.mul(oma), c.mul(one), c);
-    // 0 + c * oma ≡ 0 + c (add congruence)
+    //  0 + c * oma ≡ 0 + c (add congruence)
     T::axiom_eqv_reflexive(zero);
     additive_group_lemmas::lemma_add_congruence::<T>(zero, zero, c.mul(oma), c);
-    // 0 + c ≡ c
+    //  0 + c ≡ c
     additive_group_lemmas::lemma_add_zero_left::<T>(c);
-    // 0 + c * oma ≡ c
+    //  0 + c * oma ≡ c
     T::axiom_eqv_transitive(zero.add(c.mul(oma)), zero.add(c), c);
 }
 
-/// When oma ≡ 0: src_c + 0 * oma ≡ src_c.
+///  When oma ≡ 0: src_c + 0 * oma ≡ src_c.
 proof fn lemma_blend_channel_zero_dest<T: OrderedRing>(src_c: T, oma: T)
     ensures
         src_c.add(T::zero().mul(oma)).eqv(src_c),
 {
     let zero = T::zero();
-    // 0 * oma ≡ 0
+    //  0 * oma ≡ 0
     ring_lemmas::lemma_mul_zero_left::<T>(oma);
-    // src_c + 0 * oma ≡ src_c + 0 (add congruence)
+    //  src_c + 0 * oma ≡ src_c + 0 (add congruence)
     T::axiom_eqv_reflexive(src_c);
     additive_group_lemmas::lemma_add_congruence::<T>(src_c, src_c, zero.mul(oma), zero);
-    // src_c + 0 ≡ src_c
+    //  src_c + 0 ≡ src_c
     T::axiom_add_zero_right(src_c);
-    // chain
+    //  chain
     T::axiom_eqv_transitive(src_c.add(zero.mul(oma)), src_c.add(zero), src_c);
 }
 
-/// When oma ≡ 0: src_c + dst_c * oma ≡ src_c.
+///  When oma ≡ 0: src_c + dst_c * oma ≡ src_c.
 proof fn lemma_blend_channel_opaque<T: OrderedRing>(src_c: T, dst_c: T, oma: T)
     requires
         oma.eqv(T::zero()),
@@ -80,32 +80,32 @@ proof fn lemma_blend_channel_opaque<T: OrderedRing>(src_c: T, dst_c: T, oma: T)
         src_c.add(dst_c.mul(oma)).eqv(src_c),
 {
     let zero = T::zero();
-    // dst_c * oma ≡ dst_c * 0 (congruence)
+    //  dst_c * oma ≡ dst_c * 0 (congruence)
     T::axiom_eqv_reflexive(dst_c);
     ring_lemmas::lemma_mul_congruence::<T>(dst_c, dst_c, oma, zero);
-    // dst_c * 0 ≡ 0
+    //  dst_c * 0 ≡ 0
     T::axiom_mul_zero_right(dst_c);
-    // dst_c * oma ≡ 0
+    //  dst_c * oma ≡ 0
     T::axiom_eqv_transitive(dst_c.mul(oma), dst_c.mul(zero), zero);
-    // src_c + dst_c * oma ≡ src_c + 0 (add congruence)
+    //  src_c + dst_c * oma ≡ src_c + 0 (add congruence)
     T::axiom_eqv_reflexive(src_c);
     additive_group_lemmas::lemma_add_congruence::<T>(src_c, src_c, dst_c.mul(oma), zero);
-    // src_c + 0 ≡ src_c
+    //  src_c + 0 ≡ src_c
     T::axiom_add_zero_right(src_c);
-    // chain
+    //  chain
     T::axiom_eqv_transitive(src_c.add(dst_c.mul(oma)), src_c.add(zero), src_c);
 }
 
-// ---------------------------------------------------------------------------
-// Lemma: blend(transparent, dst) ≡ dst
-// ---------------------------------------------------------------------------
+//  ---------------------------------------------------------------------------
+//  Lemma: blend(transparent, dst) ≡ dst
+//  ---------------------------------------------------------------------------
 
-/// Blending transparent source over dst yields dst.
+///  Blending transparent source over dst yields dst.
 pub proof fn lemma_blend_transparent_source<T: OrderedRing>(dst: RgbaSpec<T>)
     ensures
         blend_over(transparent(), dst).eqv(dst),
 {
-    // 1 - 0 ≡ 1
+    //  1 - 0 ≡ 1
     let one = T::one();
     let zero = T::zero();
     T::axiom_sub_is_add_neg(one, zero);
@@ -123,11 +123,11 @@ pub proof fn lemma_blend_transparent_source<T: OrderedRing>(dst: RgbaSpec<T>)
     lemma_blend_channel_zero_source::<T>(dst.a, oma);
 }
 
-// ---------------------------------------------------------------------------
-// Lemma: blend(src, transparent) ≡ src
-// ---------------------------------------------------------------------------
+//  ---------------------------------------------------------------------------
+//  Lemma: blend(src, transparent) ≡ src
+//  ---------------------------------------------------------------------------
 
-/// Blending any source over transparent dest yields src.
+///  Blending any source over transparent dest yields src.
 pub proof fn lemma_blend_transparent_dest<T: OrderedRing>(src: RgbaSpec<T>)
     ensures
         blend_over(src, transparent()).eqv(src),
@@ -139,11 +139,11 @@ pub proof fn lemma_blend_transparent_dest<T: OrderedRing>(src: RgbaSpec<T>)
     lemma_blend_channel_zero_dest::<T>(src.a, oma);
 }
 
-// ---------------------------------------------------------------------------
-// Lemma: blend(opaque_src, dst) ≡ opaque_src
-// ---------------------------------------------------------------------------
+//  ---------------------------------------------------------------------------
+//  Lemma: blend(opaque_src, dst) ≡ opaque_src
+//  ---------------------------------------------------------------------------
 
-/// Blending an opaque source over anything yields the source.
+///  Blending an opaque source over anything yields the source.
 pub proof fn lemma_blend_opaque_source<T: OrderedRing>(
     src: RgbaSpec<T>,
     dst: RgbaSpec<T>,
@@ -156,7 +156,7 @@ pub proof fn lemma_blend_opaque_source<T: OrderedRing>(
     let one = T::one();
     let zero = T::zero();
 
-    // one.sub(src.a) ≡ one.sub(one) ≡ 0
+    //  one.sub(src.a) ≡ one.sub(one) ≡ 0
     T::axiom_eqv_reflexive(one);
     T::axiom_eqv_symmetric(src.a, one);
     additive_group_lemmas::lemma_sub_congruence::<T>(one, one, src.a, one);
@@ -170,11 +170,11 @@ pub proof fn lemma_blend_opaque_source<T: OrderedRing>(
     lemma_blend_channel_opaque::<T>(src.a, dst.a, oma);
 }
 
-// ---------------------------------------------------------------------------
-// Lemma: blend congruence — eqv inputs → eqv output
-// ---------------------------------------------------------------------------
+//  ---------------------------------------------------------------------------
+//  Lemma: blend congruence — eqv inputs → eqv output
+//  ---------------------------------------------------------------------------
 
-/// If src1 ≡ src2 and dst1 ≡ dst2, then blend(src1,dst1) ≡ blend(src2,dst2).
+///  If src1 ≡ src2 and dst1 ≡ dst2, then blend(src1,dst1) ≡ blend(src2,dst2).
 pub proof fn lemma_blend_congruence<T: OrderedRing>(
     src1: RgbaSpec<T>, src2: RgbaSpec<T>,
     dst1: RgbaSpec<T>, dst2: RgbaSpec<T>,
@@ -189,25 +189,25 @@ pub proof fn lemma_blend_congruence<T: OrderedRing>(
     let oma1 = one.sub(src1.a);
     let oma2 = one.sub(src2.a);
 
-    // oma1 ≡ oma2
+    //  oma1 ≡ oma2
     T::axiom_eqv_reflexive(one);
     additive_group_lemmas::lemma_sub_congruence::<T>(one, one, src1.a, src2.a);
 
-    // r channel
+    //  r channel
     ring_lemmas::lemma_mul_congruence::<T>(dst1.r, dst2.r, oma1, oma2);
     additive_group_lemmas::lemma_add_congruence::<T>(src1.r, src2.r, dst1.r.mul(oma1), dst2.r.mul(oma2));
 
-    // g channel
+    //  g channel
     ring_lemmas::lemma_mul_congruence::<T>(dst1.g, dst2.g, oma1, oma2);
     additive_group_lemmas::lemma_add_congruence::<T>(src1.g, src2.g, dst1.g.mul(oma1), dst2.g.mul(oma2));
 
-    // b channel
+    //  b channel
     ring_lemmas::lemma_mul_congruence::<T>(dst1.b, dst2.b, oma1, oma2);
     additive_group_lemmas::lemma_add_congruence::<T>(src1.b, src2.b, dst1.b.mul(oma1), dst2.b.mul(oma2));
 
-    // a channel
+    //  a channel
     ring_lemmas::lemma_mul_congruence::<T>(dst1.a, dst2.a, oma1, oma2);
     additive_group_lemmas::lemma_add_congruence::<T>(src1.a, src2.a, dst1.a.mul(oma1), dst2.a.mul(oma2));
 }
 
-} // verus!
+} //  verus!

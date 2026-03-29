@@ -6,22 +6,22 @@ use crate::flatten::*;
 
 verus! {
 
-// ---------------------------------------------------------------------------
-// Tile grid coordinate embedding
-// ---------------------------------------------------------------------------
+//  ---------------------------------------------------------------------------
+//  Tile grid coordinate embedding
+//  ---------------------------------------------------------------------------
 
-/// Embed an integer coordinate into the ring.
-/// Tile corner at grid index `i` with tile size `s` is at position `i * s`.
+///  Embed an integer coordinate into the ring.
+///  Tile corner at grid index `i` with tile size `s` is at position `i * s`.
 pub open spec fn tile_coord<T: OrderedRing>(index: int, tile_size: int) -> T {
     from_int::<T>(index * tile_size)
 }
 
-// ---------------------------------------------------------------------------
-// Tile bbox
-// ---------------------------------------------------------------------------
+//  ---------------------------------------------------------------------------
+//  Tile bbox
+//  ---------------------------------------------------------------------------
 
-/// Bounding box of tile (tx, ty) with given tile_size.
-/// Covers [tx*size, (tx+1)*size] x [ty*size, (ty+1)*size].
+///  Bounding box of tile (tx, ty) with given tile_size.
+///  Covers [tx*size, (tx+1)*size] x [ty*size, (ty+1)*size].
 pub open spec fn tile_bbox<T: OrderedRing>(
     tx: int, ty: int, tile_size: int,
 ) -> BBox<T> {
@@ -37,32 +37,32 @@ pub open spec fn tile_bbox<T: OrderedRing>(
     }
 }
 
-// ---------------------------------------------------------------------------
-// Tile grid
-// ---------------------------------------------------------------------------
+//  ---------------------------------------------------------------------------
+//  Tile grid
+//  ---------------------------------------------------------------------------
 
-/// Configuration for a tile grid covering a canvas.
+///  Configuration for a tile grid covering a canvas.
 pub struct TileGrid {
-    pub tile_w: nat,    // number of tile columns
-    pub tile_h: nat,    // number of tile rows
-    pub tile_size: int, // pixels per tile edge (> 0)
+    pub tile_w: nat,    //  number of tile columns
+    pub tile_h: nat,    //  number of tile rows
+    pub tile_size: int, //  pixels per tile edge (> 0)
 }
 
-/// Linear index of tile (tx, ty) in row-major order.
+///  Linear index of tile (tx, ty) in row-major order.
 pub open spec fn tile_index(tx: nat, ty: nat, tile_w: nat) -> nat {
     (ty * tile_w + tx) as nat
 }
 
-/// Total number of tiles.
+///  Total number of tiles.
 pub open spec fn tile_count(grid: TileGrid) -> nat {
     (grid.tile_w * grid.tile_h) as nat
 }
 
-// ---------------------------------------------------------------------------
-// Bin assignment: which items go into which tile
-// ---------------------------------------------------------------------------
+//  ---------------------------------------------------------------------------
+//  Bin assignment: which items go into which tile
+//  ---------------------------------------------------------------------------
 
-/// An item's bbox overlaps a tile's bbox (not separated).
+///  An item's bbox overlaps a tile's bbox (not separated).
 pub open spec fn item_hits_tile<T: OrderedRing>(
     item_bbox: BBox<T>,
     tx: int, ty: int, tile_size: int,
@@ -70,7 +70,7 @@ pub open spec fn item_hits_tile<T: OrderedRing>(
     bbox_overlaps(item_bbox, tile_bbox(tx, ty, tile_size))
 }
 
-/// Collect indices of items whose bbox overlaps tile (tx, ty).
+///  Collect indices of items whose bbox overlaps tile (tx, ty).
 pub open spec fn bin_single_tile<T: OrderedField>(
     items: Seq<PaintItem<T>>,
     tx: int, ty: int, tile_size: int,
@@ -90,8 +90,8 @@ pub open spec fn bin_single_tile<T: OrderedField>(
     }
 }
 
-/// Assign all items to all tiles. Returns a Seq of length tile_w * tile_h,
-/// where entry [tile_index(tx, ty)] contains the item indices for that tile.
+///  Assign all items to all tiles. Returns a Seq of length tile_w * tile_h,
+///  where entry [tile_index(tx, ty)] contains the item indices for that tile.
 pub open spec fn bin_items<T: OrderedField>(
     items: Seq<PaintItem<T>>,
     grid: TileGrid,
@@ -106,11 +106,11 @@ pub open spec fn bin_items<T: OrderedField>(
     )
 }
 
-// ---------------------------------------------------------------------------
-// Validity predicates for bin output
-// ---------------------------------------------------------------------------
+//  ---------------------------------------------------------------------------
+//  Validity predicates for bin output
+//  ---------------------------------------------------------------------------
 
-/// All indices in a bin are valid (< items.len()).
+///  All indices in a bin are valid (< items.len()).
 pub open spec fn bin_indices_valid<T: OrderedField>(
     items: Seq<PaintItem<T>>,
     bin: Seq<nat>,
@@ -118,11 +118,11 @@ pub open spec fn bin_indices_valid<T: OrderedField>(
     forall|j: int| 0 <= j < bin.len() ==> (bin[j] as int) < items.len()
 }
 
-/// No duplicate entries in a bin.
+///  No duplicate entries in a bin.
 pub open spec fn bin_no_duplicates(bin: Seq<nat>) -> bool {
     forall|j: int, k: int|
         0 <= j < bin.len() && 0 <= k < bin.len() && j != k
         ==> bin[j] != bin[k]
 }
 
-} // verus!
+} //  verus!
