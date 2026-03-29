@@ -9,17 +9,17 @@ use crate::antialias::{sample_point, sample_hit, pixel_coverage};
 
 verus! {
 
-// ---------------------------------------------------------------------------
-// Render specification
+//  ---------------------------------------------------------------------------
+//  Render specification
 //
-// Defines the ground-truth color at each pixel for a given scene.
-// The exec-level render function must produce results matching these specs.
-// ---------------------------------------------------------------------------
+//  Defines the ground-truth color at each pixel for a given scene.
+//  The exec-level render function must produce results matching these specs.
+//  ---------------------------------------------------------------------------
 
-/// Coverage-scaled color for a single draw command at a pixel.
+///  Coverage-scaled color for a single draw command at a pixel.
 ///
-/// Evaluates MSAA coverage (N×N samples), then scales the brush color
-/// by coverage/N² for anti-aliased blending.
+///  Evaluates MSAA coverage (N×N samples), then scales the brush color
+///  by coverage/N² for anti-aliased blending.
 pub open spec fn command_pixel_color<T: OrderedField>(
     cmd: DrawCommand<T>,
     px: int, py: int,
@@ -36,14 +36,14 @@ pub open spec fn command_pixel_color<T: OrderedField>(
         let brush = command_brush(cmd);
         let center = sample_point::<T>(px, py, 0, 0, n);
         brush_color_at(brush, center)
-        // Future: scale by hits / (n*n) for fractional coverage AA
+        //  Future: scale by hits / (n*n) for fractional coverage AA
     }
 }
 
-/// Render a scene at a single pixel using painter's algorithm.
+///  Render a scene at a single pixel using painter's algorithm.
 ///
-/// Processes commands from index `k` onward, compositing each command's
-/// color over the accumulator via source-over blending.
+///  Processes commands from index `k` onward, compositing each command's
+///  color over the accumulator via source-over blending.
 pub open spec fn render_pixel<T: OrderedField>(
     scene: Seq<DrawCommand<T>>,
     px: int, py: int,
@@ -63,7 +63,7 @@ pub open spec fn render_pixel<T: OrderedField>(
     }
 }
 
-/// Full scene pixel color: start from transparent, process all commands.
+///  Full scene pixel color: start from transparent, process all commands.
 pub open spec fn scene_pixel_color<T: OrderedField>(
     scene: Seq<DrawCommand<T>>,
     px: int, py: int,
@@ -74,4 +74,4 @@ pub open spec fn scene_pixel_color<T: OrderedField>(
     render_pixel(scene, px, py, n, 0, transparent())
 }
 
-} // verus!
+} //  verus!

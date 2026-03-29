@@ -12,9 +12,9 @@ use super::tile::RuntimeTileGrid;
 #[cfg(verus_keep_ghost)]
 verus! {
 
-// ---------------------------------------------------------------------------
-// RuntimePaintItem — a rasterizable paint item
-// ---------------------------------------------------------------------------
+//  ---------------------------------------------------------------------------
+//  RuntimePaintItem — a rasterizable paint item
+//  ---------------------------------------------------------------------------
 
 pub struct RuntimePaintItem {
     pub path: Vec<RuntimePoint2>,
@@ -25,9 +25,9 @@ pub struct RuntimePaintItem {
     pub cap: LineCap,
 }
 
-// ---------------------------------------------------------------------------
-// Copy helpers
-// ---------------------------------------------------------------------------
+//  ---------------------------------------------------------------------------
+//  Copy helpers
+//  ---------------------------------------------------------------------------
 
 pub fn copy_point2(p: &RuntimePoint2) -> (out: RuntimePoint2)
     requires p.wf_spec(),
@@ -49,12 +49,12 @@ pub fn copy_rgba(c: &RuntimeRgba) -> (out: RuntimeRgba)
     RuntimeRgba::new(r, g, b, a)
 }
 
-// ---------------------------------------------------------------------------
-// Verified rasterization primitives
-// ---------------------------------------------------------------------------
+//  ---------------------------------------------------------------------------
+//  Verified rasterization primitives
+//  ---------------------------------------------------------------------------
 
-/// Winding contribution of directed edge p0->p1 at point c.
-/// Returns +1 (upward left-of-edge), -1 (downward left-of-edge), or 0.
+///  Winding contribution of directed edge p0->p1 at point c.
+///  Returns +1 (upward left-of-edge), -1 (downward left-of-edge), or 0.
 pub fn edge_winding_exec(
     p0: &RuntimePoint2, p1: &RuntimePoint2, c: &RuntimePoint2,
 ) -> (out: i32)
@@ -63,7 +63,7 @@ pub fn edge_winding_exec(
         p1.wf_spec(),
         c.wf_spec(),
 {
-    // Horizontal ray crossing test
+    //  Horizontal ray crossing test
     let p0y_le_cy = p0.y.le(&c.y);
     let cy_lt_p1y = c.y.lt(&p1.y);
     let upward = p0y_le_cy && cy_lt_p1y;
@@ -76,7 +76,7 @@ pub fn edge_winding_exec(
         return 0i32;
     }
 
-    // Cross product sign: (p1.x-p0.x)(c.y-p0.y) - (p1.y-p0.y)(c.x-p0.x)
+    //  Cross product sign: (p1.x-p0.x)(c.y-p0.y) - (p1.y-p0.y)(c.x-p0.x)
     let dx = p1.x.sub(&p0.x);
     let dy = p1.y.sub(&p0.y);
     let cx_val = c.x.sub(&p0.x);
@@ -93,7 +93,7 @@ pub fn edge_winding_exec(
     }
 }
 
-/// Apply fill rule to winding number.
+///  Apply fill rule to winding number.
 pub fn apply_fill_rule_exec(winding: i32, nonzero: bool) -> (out: bool) {
     if nonzero {
         winding != 0i32
@@ -102,11 +102,11 @@ pub fn apply_fill_rule_exec(winding: i32, nonzero: bool) -> (out: bool) {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Trusted rasterization functions (external_body)
-// ---------------------------------------------------------------------------
+//  ---------------------------------------------------------------------------
+//  Trusted rasterization functions (external_body)
+//  ---------------------------------------------------------------------------
 
-/// Pixel center at (px + 0.5, py + 0.5).
+///  Pixel center at (px + 0.5, py + 0.5).
 #[verifier::external_body]
 pub fn pixel_center(px: usize, py: usize) -> (out: RuntimePoint2)
     ensures out.wf_spec(),
@@ -118,8 +118,8 @@ pub fn pixel_center(px: usize, py: usize) -> (out: RuntimePoint2)
     RuntimePoint2::new(cx, cy)
 }
 
-/// Convert rational [0,1] to u8 [0,255] with rounding.
-/// This is the sole approximation point in the pipeline.
+///  Convert rational [0,1] to u8 [0,255] with rounding.
+///  This is the sole approximation point in the pipeline.
 #[verifier::external_body]
 pub fn scalar_to_u8(r: &RuntimeScalar) -> (out: u8) {
     let zero = RuntimeScalar::from_int(0);
@@ -132,7 +132,7 @@ pub fn scalar_to_u8(r: &RuntimeScalar) -> (out: u8) {
     let half = RuntimeScalar::from_frac(1, 2);
     let rounded = scaled.add(&half);
 
-    // Binary search for floor(rounded) in [0, 256)
+    //  Binary search for floor(rounded) in [0, 256)
     let mut lo: i64 = 0;
     let mut hi: i64 = 256;
     while lo < hi {
@@ -147,7 +147,7 @@ pub fn scalar_to_u8(r: &RuntimeScalar) -> (out: u8) {
     lo as u8
 }
 
-/// Compute winding number of closed polygon at a point.
+///  Compute winding number of closed polygon at a point.
 #[verifier::external_body]
 pub fn winding_at(path: &Vec<RuntimePoint2>, center: &RuntimePoint2) -> (out: i32) {
     let n = path.len();
@@ -163,7 +163,7 @@ pub fn winding_at(path: &Vec<RuntimePoint2>, center: &RuntimePoint2) -> (out: i3
     winding
 }
 
-/// Render one tile into the pixel buffer.
+///  Render one tile into the pixel buffer.
 #[verifier::external_body]
 pub fn render_tile(
     pixels: &mut Vec<u8>,
@@ -222,7 +222,7 @@ pub fn render_tile(
     }
 }
 
-/// Render all tiles into the pixel buffer.
+///  Render all tiles into the pixel buffer.
 #[verifier::external_body]
 pub fn render_all_tiles(
     pixels: &mut Vec<u8>,
@@ -247,4 +247,4 @@ pub fn render_all_tiles(
     }
 }
 
-} // verus!
+} //  verus!

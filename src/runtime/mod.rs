@@ -6,28 +6,28 @@ use vstd::prelude::*;
 #[cfg(verus_keep_ghost)]
 use verus_rational::rational::Rational;
 
-// ---------------------------------------------------------------------------
-// Scalar backend configuration
+//  ---------------------------------------------------------------------------
+//  Scalar backend configuration
 //
-// To swap the numeric backend (e.g. to modular fixed-point), change these
-// two type aliases and the body of copy_scalar. All runtime modules are
-// written against RuntimeScalar / ScalarModel and will follow.
+//  To swap the numeric backend (e.g. to modular fixed-point), change these
+//  two type aliases and the body of copy_scalar. All runtime modules are
+//  written against RuntimeScalar / ScalarModel and will follow.
 //
-// RuntimePoint2 (from verus-geometry) also uses RuntimeRational internally;
-// it will need the same treatment when the backend changes.
-// ---------------------------------------------------------------------------
+//  RuntimePoint2 (from verus-geometry) also uses RuntimeRational internally;
+//  it will need the same treatment when the backend changes.
+//  ---------------------------------------------------------------------------
 
-/// Spec-level scalar type. Must satisfy OrderedField.
+///  Spec-level scalar type. Must satisfy OrderedField.
 #[cfg(verus_keep_ghost)]
 pub type ScalarModel = Rational;
 
-/// Runtime scalar type. Must provide wf_spec() and view() -> ScalarModel.
+///  Runtime scalar type. Must provide wf_spec() and view() -> ScalarModel.
 pub type RuntimeScalar = RuntimeRational;
 
 #[cfg(verus_keep_ghost)]
 verus! {
 
-/// Copy a RuntimeScalar value.
+///  Copy a RuntimeScalar value.
 pub fn copy_scalar(r: &RuntimeScalar) -> (out: RuntimeScalar)
     requires
         r.wf_spec(),
@@ -44,7 +44,7 @@ pub fn copy_scalar(r: &RuntimeScalar) -> (out: RuntimeScalar)
     }
 }
 
-} // verus!
+} //  verus!
 
 pub mod color;
 pub mod flatten;

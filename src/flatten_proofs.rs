@@ -11,11 +11,11 @@ use crate::scene::*;
 
 verus! {
 
-// ---------------------------------------------------------------------------
-// BBox conservativeness: every point in the sequence is inside the bbox
-// ---------------------------------------------------------------------------
+//  ---------------------------------------------------------------------------
+//  BBox conservativeness: every point in the sequence is inside the bbox
+//  ---------------------------------------------------------------------------
 
-/// Every point in pts is inside bbox_of_points(pts).
+///  Every point in pts is inside bbox_of_points(pts).
 pub proof fn lemma_bbox_contains_all_points<T: OrderedRing>(
     pts: Seq<Point2<T>>,
     i: int,
@@ -32,27 +32,27 @@ pub proof fn lemma_bbox_contains_all_points<T: OrderedRing>(
         T::axiom_le_reflexive(pts[0].x);
         T::axiom_le_reflexive(pts[0].y);
     } else if i < pts.len() - 1 {
-        // Point is in the prefix — use induction
+        //  Point is in the prefix — use induction
         let prefix = pts.drop_last();
         lemma_bbox_contains_all_points::<T>(prefix, i);
         let pb = bbox_of_points(prefix);
         let p = pts.last();
 
-        // min(pb.min.x, p.x) <= pb.min.x <= pts[i].x
+        //  min(pb.min.x, p.x) <= pb.min.x <= pts[i].x
         min_max::lemma_min_le_left::<T>(pb.min.x, p.x);
         T::axiom_le_transitive(min::<T>(pb.min.x, p.x), pb.min.x, pts[i].x);
 
         min_max::lemma_min_le_left::<T>(pb.min.y, p.y);
         T::axiom_le_transitive(min::<T>(pb.min.y, p.y), pb.min.y, pts[i].y);
 
-        // pts[i].x <= pb.max.x <= max(pb.max.x, p.x)
+        //  pts[i].x <= pb.max.x <= max(pb.max.x, p.x)
         min_max::lemma_max_ge_left::<T>(pb.max.x, p.x);
         T::axiom_le_transitive(pts[i].x, pb.max.x, max::<T>(pb.max.x, p.x));
 
         min_max::lemma_max_ge_left::<T>(pb.max.y, p.y);
         T::axiom_le_transitive(pts[i].y, pb.max.y, max::<T>(pb.max.y, p.y));
     } else {
-        // i == pts.len() - 1, the last point
+        //  i == pts.len() - 1, the last point
         let prefix = pts.drop_last();
         let p = pts.last();
         let pb = bbox_of_points(prefix);
@@ -64,18 +64,18 @@ pub proof fn lemma_bbox_contains_all_points<T: OrderedRing>(
     }
 }
 
-// ---------------------------------------------------------------------------
-// Transform composition
-// ---------------------------------------------------------------------------
+//  ---------------------------------------------------------------------------
+//  Transform composition
+//  ---------------------------------------------------------------------------
 
-/// An affine matrix has last row (0, 0, 1).
+///  An affine matrix has last row (0, 0, 1).
 pub open spec fn is_affine<T: Ring>(m: Mat3x3<T>) -> bool {
     m.row2.x.eqv(T::zero())
     && m.row2.y.eqv(T::zero())
     && m.row2.z.eqv(T::one())
 }
 
-/// The identity matrix is affine.
+///  The identity matrix is affine.
 pub proof fn lemma_identity_is_affine<T: Ring>()
     ensures
         is_affine(identity::<T>()),
@@ -84,9 +84,9 @@ pub proof fn lemma_identity_is_affine<T: Ring>()
     T::axiom_eqv_reflexive(T::one());
 }
 
-/// Transform composition at the Vec3 level: mat_vec_mul associativity.
+///  Transform composition at the Vec3 level: mat_vec_mul associativity.
 ///
-/// mat_vec_mul(mat_mul(A, B), v) componentwise ≡ mat_vec_mul(A, mat_vec_mul(B, v))
+///  mat_vec_mul(mat_mul(A, B), v) componentwise ≡ mat_vec_mul(A, mat_vec_mul(B, v))
 pub proof fn lemma_transform_composition<T: OrderedField>(
     a: Mat3x3<T>, b: Mat3x3<T>, p: Point2<T>,
 )
@@ -106,4 +106,4 @@ pub proof fn lemma_transform_composition<T: OrderedField>(
     T::axiom_eqv_symmetric(lhs.y, rhs.y);
 }
 
-} // verus!
+} //  verus!

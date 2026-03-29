@@ -7,9 +7,9 @@ use crate::brush::Brush;
 
 verus! {
 
-// ---------------------------------------------------------------------------
-// Path segments (used for curve input before flattening)
-// ---------------------------------------------------------------------------
+//  ---------------------------------------------------------------------------
+//  Path segments (used for curve input before flattening)
+//  ---------------------------------------------------------------------------
 
 pub enum PathSegment<T: OrderedField> {
     MoveTo { p: Point2<T> },
@@ -19,41 +19,41 @@ pub enum PathSegment<T: OrderedField> {
     ClosePath,
 }
 
-// ---------------------------------------------------------------------------
-// Fill rule
-// ---------------------------------------------------------------------------
+//  ---------------------------------------------------------------------------
+//  Fill rule
+//  ---------------------------------------------------------------------------
 
 pub enum FillRule {
     NonZero,
     EvenOdd,
 }
 
-// ---------------------------------------------------------------------------
-// Line cap (stroke endpoints)
-// ---------------------------------------------------------------------------
+//  ---------------------------------------------------------------------------
+//  Line cap (stroke endpoints)
+//  ---------------------------------------------------------------------------
 
 pub enum LineCap {
-    /// Flat end at the exact endpoint — no extension.
+    ///  Flat end at the exact endpoint — no extension.
     Butt,
-    /// Semicircle of radius half_width at each endpoint.
+    ///  Semicircle of radius half_width at each endpoint.
     Round,
 }
 
-// ---------------------------------------------------------------------------
-// Render mode — how a flattened item is rasterized
-// ---------------------------------------------------------------------------
+//  ---------------------------------------------------------------------------
+//  Render mode — how a flattened item is rasterized
+//  ---------------------------------------------------------------------------
 
 pub enum RenderMode<T: OrderedRing> {
     Fill { fill_rule: FillRule },
     Stroke { half_width: T, cap: LineCap },
 }
 
-// ---------------------------------------------------------------------------
-// Draw command — a single self-contained drawing operation
+//  ---------------------------------------------------------------------------
+//  Draw command — a single self-contained drawing operation
 //
-// Each command carries its own path, brush, and rendering parameters.
-// No hidden mutable state.
-// ---------------------------------------------------------------------------
+//  Each command carries its own path, brush, and rendering parameters.
+//  No hidden mutable state.
+//  ---------------------------------------------------------------------------
 
 pub enum DrawCommand<T: OrderedField> {
     Fill {
@@ -69,11 +69,11 @@ pub enum DrawCommand<T: OrderedField> {
     },
 }
 
-// ---------------------------------------------------------------------------
-// DrawCommand accessors
-// ---------------------------------------------------------------------------
+//  ---------------------------------------------------------------------------
+//  DrawCommand accessors
+//  ---------------------------------------------------------------------------
 
-/// Extract the render mode from a draw command.
+///  Extract the render mode from a draw command.
 pub open spec fn command_mode<T: OrderedField>(cmd: DrawCommand<T>) -> RenderMode<T> {
     match cmd {
         DrawCommand::Fill { fill_rule, .. } =>
@@ -83,7 +83,7 @@ pub open spec fn command_mode<T: OrderedField>(cmd: DrawCommand<T>) -> RenderMod
     }
 }
 
-/// Extract the vertex sequence from a draw command.
+///  Extract the vertex sequence from a draw command.
 pub open spec fn command_vertices<T: OrderedField>(cmd: DrawCommand<T>) -> Seq<Point2<T>> {
     match cmd {
         DrawCommand::Fill { path, .. } => path.vertices,
@@ -91,7 +91,7 @@ pub open spec fn command_vertices<T: OrderedField>(cmd: DrawCommand<T>) -> Seq<P
     }
 }
 
-/// Extract the brush from a draw command.
+///  Extract the brush from a draw command.
 pub open spec fn command_brush<T: OrderedField>(cmd: DrawCommand<T>) -> Brush<T> {
     match cmd {
         DrawCommand::Fill { brush, .. } => brush,
@@ -99,4 +99,4 @@ pub open spec fn command_brush<T: OrderedField>(cmd: DrawCommand<T>) -> Brush<T>
     }
 }
 
-} // verus!
+} //  verus!

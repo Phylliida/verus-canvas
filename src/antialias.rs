@@ -6,18 +6,18 @@ use crate::scene::RenderMode;
 
 verus! {
 
-// ---------------------------------------------------------------------------
-// Multi-sample anti-aliasing (MSAA) — spec level
+//  ---------------------------------------------------------------------------
+//  Multi-sample anti-aliasing (MSAA) — spec level
 //
-// An NxN regular grid of sample points within each pixel.
-// Sample (i, j) sits at  ((2i + 1) / 2N,  (2j + 1) / 2N)  relative to
-// the pixel's top-left corner.  N = 1 reduces to center-point sampling
-// (no AA); N = 2 gives 4× MSAA; N = 4 gives 16× MSAA.
-// ---------------------------------------------------------------------------
+//  An NxN regular grid of sample points within each pixel.
+//  Sample (i, j) sits at  ((2i + 1) / 2N,  (2j + 1) / 2N)  relative to
+//  the pixel's top-left corner.  N = 1 reduces to center-point sampling
+//  (no AA); N = 2 gives 4× MSAA; N = 4 gives 16× MSAA.
+//  ---------------------------------------------------------------------------
 
-/// Sample point (i, j) within pixel (px, py) for an NxN grid.
+///  Sample point (i, j) within pixel (px, py) for an NxN grid.
 ///
-/// Position:  (px + (2i+1)/(2N),  py + (2j+1)/(2N))
+///  Position:  (px + (2i+1)/(2N),  py + (2j+1)/(2N))
 pub open spec fn sample_point<T: OrderedField>(
     px: int, py: int, i: nat, j: nat, n: nat,
 ) -> Point2<T>
@@ -31,10 +31,10 @@ pub open spec fn sample_point<T: OrderedField>(
     }
 }
 
-/// Test whether a single sample point is "hit" by the render mode.
+///  Test whether a single sample point is "hit" by the render mode.
 ///
-/// - Fill: winding number + fill rule
-/// - Stroke: distance-to-path test
+///  - Fill: winding number + fill rule
+///  - Stroke: distance-to-path test
 pub open spec fn sample_hit<T: OrderedField>(
     vertices: Seq<Point2<T>>,
     point: Point2<T>,
@@ -51,10 +51,10 @@ pub open spec fn sample_hit<T: OrderedField>(
     }
 }
 
-/// Count hits across all N² samples within pixel (px, py).
+///  Count hits across all N² samples within pixel (px, py).
 ///
-/// Iterates linearly over sample index k = 0 .. N²-1,
-/// where (i, j) = (k / N, k % N).
+///  Iterates linearly over sample index k = 0 .. N²-1,
+///  where (i, j) = (k / N, k % N).
 pub open spec fn hit_count<T: OrderedField>(
     vertices: Seq<Point2<T>>,
     px: int, py: int,
@@ -76,7 +76,7 @@ pub open spec fn hit_count<T: OrderedField>(
     }
 }
 
-/// Total hit count for all N² samples at pixel (px, py).
+///  Total hit count for all N² samples at pixel (px, py).
 pub open spec fn pixel_coverage<T: OrderedField>(
     vertices: Seq<Point2<T>>,
     px: int, py: int,
@@ -88,4 +88,4 @@ pub open spec fn pixel_coverage<T: OrderedField>(
     hit_count(vertices, px, py, n, mode, 0)
 }
 
-} // verus!
+} //  verus!

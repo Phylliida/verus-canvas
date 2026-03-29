@@ -24,9 +24,9 @@ use super::{RuntimeScalar, copy_scalar};
 #[cfg(verus_keep_ghost)]
 verus! {
 
-// ---------------------------------------------------------------------------
-// RuntimeBBox
-// ---------------------------------------------------------------------------
+//  ---------------------------------------------------------------------------
+//  RuntimeBBox
+//  ---------------------------------------------------------------------------
 
 pub struct RuntimeBBox {
     pub min: RuntimePoint2,
@@ -63,7 +63,7 @@ impl RuntimeBBox {
         RuntimeBBox { min, max, model: Ghost(model) }
     }
 
-    /// Expand this bbox to include a point.
+    ///  Expand this bbox to include a point.
     pub fn expand(&self, p: &RuntimePoint2) -> (out: Self)
         requires
             self.wf_spec(),
@@ -94,7 +94,7 @@ impl RuntimeBBox {
         RuntimeBBox { min: new_min, max: new_max, model: Ghost(model) }
     }
 
-    /// Create a bbox from a single point.
+    ///  Create a bbox from a single point.
     pub fn from_point(p: &RuntimePoint2) -> (out: Self)
         requires
             p.wf_spec(),
@@ -112,11 +112,11 @@ impl RuntimeBBox {
     }
 }
 
-// ---------------------------------------------------------------------------
-// transform_point2_exec — apply affine transform to a 2D point
-// ---------------------------------------------------------------------------
+//  ---------------------------------------------------------------------------
+//  transform_point2_exec — apply affine transform to a 2D point
+//  ---------------------------------------------------------------------------
 
-/// Apply a Mat3x3 affine transform to a 2D point via homogeneous coordinates.
+///  Apply a Mat3x3 affine transform to a 2D point via homogeneous coordinates.
 pub fn transform_point2_exec(
     m: &RuntimeMat3x3, p: &RuntimePoint2,
 ) -> (out: RuntimePoint2)
@@ -127,16 +127,16 @@ pub fn transform_point2_exec(
         out.wf_spec(),
         out@ == transform_point2::<ScalarModel>(m@, p@),
 {
-    // Embed into homogeneous coords: (p.x, p.y, 1)
+    //  Embed into homogeneous coords: (p.x, p.y, 1)
     let one = RuntimeScalar::from_int(1);
     let px = copy_scalar(&p.x);
     let py = copy_scalar(&p.y);
     let v = RuntimeVec3::new(px, py, one);
 
-    // Apply transform
+    //  Apply transform
     let result = m.mat_vec_mul_exec(&v);
 
-    // Extract x, y
+    //  Extract x, y
     let out_x = result.x;
     let out_y = result.y;
 
@@ -144,11 +144,11 @@ pub fn transform_point2_exec(
     RuntimePoint2 { x: out_x, y: out_y, model: Ghost(model) }
 }
 
-// ---------------------------------------------------------------------------
-// bbox_of_points_exec — compute bbox from a Vec of RuntimePoint2
-// ---------------------------------------------------------------------------
+//  ---------------------------------------------------------------------------
+//  bbox_of_points_exec — compute bbox from a Vec of RuntimePoint2
+//  ---------------------------------------------------------------------------
 
-/// Compute the bounding box of a non-empty Vec of points.
+///  Compute the bounding box of a non-empty Vec of points.
 pub fn bbox_of_points_exec(pts: &Vec<RuntimePoint2>) -> (out: RuntimeBBox)
     requires
         pts.len() > 0,
@@ -166,12 +166,12 @@ pub fn bbox_of_points_exec(pts: &Vec<RuntimePoint2>) -> (out: RuntimeBBox)
         assert(pts_seq =~= seq![pts[0]@]);
         out
     } else {
-        // Build iteratively: start from first point, expand with rest
+        //  Build iteratively: start from first point, expand with rest
         let mut bb = RuntimeBBox::from_point(&pts[0]);
         let mut idx: usize = 1;
 
         assert(pts_seq.drop_last().len() > 0 || pts.len() == 1) by {
-            // pts.len() >= 2 in this branch
+            //  pts.len() >= 2 in this branch
         }
 
         while idx < pts.len()
@@ -180,7 +180,7 @@ pub fn bbox_of_points_exec(pts: &Vec<RuntimePoint2>) -> (out: RuntimeBBox)
                 pts.len() > 1,
                 bb.wf_spec(),
                 forall|i: int| 0 <= i < pts.len() ==> pts[i].wf_spec(),
-                // bb contains all points seen so far
+                //  bb contains all points seen so far
                 bb@ == bbox_of_points(Seq::new(idx as nat, |j: int| pts[j]@)),
             decreases
                 pts.len() - idx,
@@ -190,10 +190,10 @@ pub fn bbox_of_points_exec(pts: &Vec<RuntimePoint2>) -> (out: RuntimeBBox)
 
             proof {
                 let new_seq = Seq::new((idx + 1) as nat, |j: int| pts[j]@);
-                // new_seq == old_seq.push(pts[idx]@)
+                //  new_seq == old_seq.push(pts[idx]@)
                 assert(new_seq.drop_last() =~= old_seq);
                 assert(new_seq.last() == pts[idx as int]@);
-                // bbox_of_points(new_seq) expands old bbox with last point
+                //  bbox_of_points(new_seq) expands old bbox with last point
             }
 
             idx = idx + 1;
@@ -208,9 +208,9 @@ pub fn bbox_of_points_exec(pts: &Vec<RuntimePoint2>) -> (out: RuntimeBBox)
     }
 }
 
-// ---------------------------------------------------------------------------
-// expand_bbox_exec — expand bbox by a margin in all directions
-// ---------------------------------------------------------------------------
+//  ---------------------------------------------------------------------------
+//  expand_bbox_exec — expand bbox by a margin in all directions
+//  ---------------------------------------------------------------------------
 
 pub fn expand_bbox_exec(bb: &RuntimeBBox, margin: &RuntimeScalar) -> (out: RuntimeBBox)
     requires
@@ -233,4 +233,4 @@ pub fn expand_bbox_exec(bb: &RuntimeBBox, margin: &RuntimeScalar) -> (out: Runti
     RuntimeBBox { min: new_min, max: new_max, model: Ghost(model) }
 }
 
-} // verus!
+} //  verus!

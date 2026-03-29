@@ -20,23 +20,23 @@ use super::flatten::RuntimeBBox;
 #[cfg(verus_keep_ghost)]
 verus! {
 
-// ---------------------------------------------------------------------------
-// Bridge lemma: from_int::<ScalarModel>(n) matches ScalarModel::from_int_spec(n)
+//  ---------------------------------------------------------------------------
+//  Bridge lemma: from_int::<ScalarModel>(n) matches ScalarModel::from_int_spec(n)
 //
-// For the current backend (Rational), zero() = from_int_spec(0),
-// one() = from_int_spec(1), and add_spec preserves den=0 structure,
-// so the algebra embedding nat_mul(n, one()) produces from_int_spec(n).
-// ---------------------------------------------------------------------------
+//  For the current backend (Rational), zero() = from_int_spec(0),
+//  one() = from_int_spec(1), and add_spec preserves den=0 structure,
+//  so the algebra embedding nat_mul(n, one()) produces from_int_spec(n).
+//  ---------------------------------------------------------------------------
 
 
-// ---------------------------------------------------------------------------
-// RuntimeTileGrid
-// ---------------------------------------------------------------------------
+//  ---------------------------------------------------------------------------
+//  RuntimeTileGrid
+//  ---------------------------------------------------------------------------
 
 pub struct RuntimeTileGrid {
     pub tile_w: usize,
     pub tile_h: usize,
-    pub tile_size: i64,  // pixels per tile edge, > 0
+    pub tile_size: i64,  //  pixels per tile edge, > 0
     pub model: Ghost<TileGrid>,
 }
 
@@ -73,7 +73,7 @@ impl RuntimeTileGrid {
         RuntimeTileGrid { tile_w, tile_h, tile_size, model: Ghost(model) }
     }
 
-    /// Total number of tiles.
+    ///  Total number of tiles.
     pub fn tile_count_exec(&self) -> (out: usize)
         requires
             self.wf_spec(),
@@ -85,11 +85,11 @@ impl RuntimeTileGrid {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Tile bbox construction (exec)
-// ---------------------------------------------------------------------------
+//  ---------------------------------------------------------------------------
+//  Tile bbox construction (exec)
+//  ---------------------------------------------------------------------------
 
-/// Build a RuntimeBBox for tile (tx, ty) at the given tile_size.
+///  Build a RuntimeBBox for tile (tx, ty) at the given tile_size.
 pub fn tile_bbox_exec(tx: i64, ty: i64, tile_size: i64) -> (out: RuntimeBBox)
     requires
         tile_size > 0,
@@ -119,11 +119,11 @@ pub fn tile_bbox_exec(tx: i64, ty: i64, tile_size: i64) -> (out: RuntimeBBox)
     RuntimeBBox::new(min_pt, max_pt)
 }
 
-// ---------------------------------------------------------------------------
-// Bbox overlap test (exec)
-// ---------------------------------------------------------------------------
+//  ---------------------------------------------------------------------------
+//  Bbox overlap test (exec)
+//  ---------------------------------------------------------------------------
 
-/// Check whether two bboxes overlap (are NOT separated).
+///  Check whether two bboxes overlap (are NOT separated).
 pub fn bbox_overlaps_exec(a: &RuntimeBBox, b: &RuntimeBBox) -> (out: bool)
     requires
         a.wf_spec(),
@@ -131,8 +131,8 @@ pub fn bbox_overlaps_exec(a: &RuntimeBBox, b: &RuntimeBBox) -> (out: bool)
     ensures
         out == bbox_overlaps::<ScalarModel>(a@, b@),
 {
-    // Separated if any of: a.max.x < b.min.x, b.max.x < a.min.x,
-    //                       a.max.y < b.min.y, b.max.y < a.min.y
+    //  Separated if any of: a.max.x < b.min.x, b.max.x < a.min.x,
+    //                        a.max.y < b.min.y, b.max.y < a.min.y
     let sep_x1 = a.max.x.lt(&b.min.x);
     let sep_x2 = b.max.x.lt(&a.min.x);
     let sep_y1 = a.max.y.lt(&b.min.y);
@@ -140,13 +140,13 @@ pub fn bbox_overlaps_exec(a: &RuntimeBBox, b: &RuntimeBBox) -> (out: bool)
     !(sep_x1 || sep_x2 || sep_y1 || sep_y2)
 }
 
-// ---------------------------------------------------------------------------
-// bin_items_exec — assign items to tiles
-// ---------------------------------------------------------------------------
+//  ---------------------------------------------------------------------------
+//  bin_items_exec — assign items to tiles
+//  ---------------------------------------------------------------------------
 
-/// Assign each item to the tiles its bbox overlaps.
-/// Returns a Vec of length tile_w * tile_h, where each entry is a Vec
-/// of item indices assigned to that tile.
+///  Assign each item to the tiles its bbox overlaps.
+///  Returns a Vec of length tile_w * tile_h, where each entry is a Vec
+///  of item indices assigned to that tile.
 pub fn bin_items_exec(
     item_bboxes: &Vec<RuntimeBBox>,
     grid: &RuntimeTileGrid,
@@ -156,7 +156,7 @@ pub fn bin_items_exec(
         grid.tile_w * grid.tile_h < usize::MAX,
         grid@.tile_w > 0 || grid@.tile_h == 0,
         forall|i: int| 0 <= i < item_bboxes.len() ==> item_bboxes[i].wf_spec(),
-        // Overflow bounds for tile_bbox_exec calls
+        //  Overflow bounds for tile_bbox_exec calls
         grid.tile_w <= i64::MAX,
         grid.tile_h <= i64::MAX,
         grid.tile_size <= i64::MAX / 2,
@@ -168,7 +168,7 @@ pub fn bin_items_exec(
     let num_tiles = grid.tile_count_exec();
     let mut bins: Vec<Vec<usize>> = Vec::new();
 
-    // Initialize empty bins
+    //  Initialize empty bins
     let mut t: usize = 0;
     while t < num_tiles
         invariant
@@ -182,7 +182,7 @@ pub fn bin_items_exec(
         t = t + 1;
     }
 
-    // For each item, check each tile
+    //  For each item, check each tile
     let mut item_idx: usize = 0;
     while item_idx < item_bboxes.len()
         invariant
@@ -239,10 +239,10 @@ pub fn bin_items_exec(
                 decreases
                     grid.tile_w - tx,
             {
-                // Overflow safety: tx < tile_w <= i64::MAX, tile_size > 0,
-                // and (tile_w+1)*tile_size <= i64::MAX (from invariant).
-                // So tx*tile_size <= tile_w*tile_size <= (tile_w+1)*tile_size <= i64::MAX.
-                // Similarly for ty.
+                //  Overflow safety: tx < tile_w <= i64::MAX, tile_size > 0,
+                //  and (tile_w+1)*tile_size <= i64::MAX (from invariant).
+                //  So tx*tile_size <= tile_w*tile_size <= (tile_w+1)*tile_size <= i64::MAX.
+                //  Similarly for ty.
                 proof {
                     let tx_int = tx as int;
                     let ty_int = ty as int;
@@ -250,7 +250,7 @@ pub fn bin_items_exec(
                     let th_int = grid.tile_h as int;
                     let s = grid.tile_size as int;
 
-                    // a <= b, c > 0 ==> a*c <= b*c (Z3 nonlinear)
+                    //  a <= b, c > 0 ==> a*c <= b*c (Z3 nonlinear)
                     assert(tx_int * s <= tw_int * s) by (nonlinear_arith)
                         requires tx_int <= tw_int, s > 0 {}
                     assert(tw_int * s <= (tw_int + 1) * s) by (nonlinear_arith)
@@ -269,7 +269,7 @@ pub fn bin_items_exec(
                     tx as i64, ty as i64, grid.tile_size,
                 );
                 if bbox_overlaps_exec(item_bb, &t_bbox) {
-                    // ty < tile_h and tx < tile_w, so ty * tile_w + tx < tile_h * tile_w
+                    //  ty < tile_h and tx < tile_w, so ty * tile_w + tx < tile_h * tile_w
                     assert(ty * grid.tile_w + tx < grid.tile_w * grid.tile_h) by (nonlinear_arith)
                         requires
                             ty < grid.tile_h,
@@ -292,4 +292,4 @@ pub fn bin_items_exec(
     bins
 }
 
-} // verus!
+} //  verus!
